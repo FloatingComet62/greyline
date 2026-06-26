@@ -341,9 +341,11 @@ def render(
         proj, (sc, cx, cy) = _raster_projection(out_w, out_h, crop_anchor)
         scale = sc
         base = Image.open(base_path).convert("RGBA")  # the 1400x1050 calibration frame
-        if desaturate:  # grayscale the blue artwork → a black-and-white map,
-            # then double the contrast so the desaturated land/ocean stay distinct.
-            gray = ImageEnhance.Contrast(ImageOps.grayscale(base)).enhance(2.0)
+        if desaturate:  # grayscale the blue artwork → a black-and-white map, then
+            # contrast 150% + brightness 70% (darker) for a crisp, muted base.
+            gray = ImageOps.grayscale(base)
+            gray = ImageEnhance.Contrast(gray).enhance(1.5)
+            gray = ImageEnhance.Brightness(gray).enhance(0.7)
             base = gray.convert("RGBA")
         scaled = base.resize((round(geo.REF_W * sc), round(geo.REF_H * sc)), Image.LANCZOS)
         canvas = scaled.crop((round(cx), round(cy), round(cx) + out_w, round(cy) + out_h))
