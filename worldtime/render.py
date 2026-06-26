@@ -9,7 +9,7 @@ import os
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
 from . import geo, sun, vectormap
 
@@ -341,8 +341,10 @@ def render(
         proj, (sc, cx, cy) = _raster_projection(out_w, out_h, crop_anchor)
         scale = sc
         base = Image.open(base_path).convert("RGBA")  # the 1400x1050 calibration frame
-        if desaturate:  # grayscale the blue artwork → a black-and-white map
-            base = ImageOps.grayscale(base).convert("RGBA")
+        if desaturate:  # grayscale the blue artwork → a black-and-white map,
+            # then push contrast to 150% so the desaturated land/ocean stay distinct.
+            gray = ImageEnhance.Contrast(ImageOps.grayscale(base)).enhance(1.5)
+            base = gray.convert("RGBA")
         scaled = base.resize((round(geo.REF_W * sc), round(geo.REF_H * sc)), Image.LANCZOS)
         canvas = scaled.crop((round(cx), round(cy), round(cx) + out_w, round(cy) + out_h))
 
