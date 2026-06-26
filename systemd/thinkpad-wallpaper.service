@@ -1,0 +1,12 @@
+[Unit]
+Description=Render the ThinkPad World Time wallpaper
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=oneshot
+# Adjust the path if not installed via pipx (~/.local/bin) — e.g. /usr/bin.
+ExecStart=%h/.local/bin/thinkpad-wallpaper
+
+[Install]
+WantedBy=graphical-session.target

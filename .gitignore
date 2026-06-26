@@ -1,0 +1,12 @@
+result
+result-*
+__pycache__/
+*.py[cod]
+.direnv/
+dist/
+build/
+*.egg-info/
+.agent-shell/
+
+# Upstream source downloads kept locally for reference, not part of the repo.
+*.zip

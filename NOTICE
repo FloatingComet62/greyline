@@ -1,0 +1,41 @@
+thinkpad_world_wallpaper_revived
+================================
+
+This project is a modern, live reimplementation of the classic IBM/ThinkPad
+"World Time" Active Desktop wallpaper.
+
+Credits & lineage
+------------------
+- Original concept & artwork: IBM / Lenovo ThinkPad "World Time" Active Desktop
+  (design lineage attributed to David Hill's ThinkPad design team).
+- Open-source HTML/JS tribute (GPL): Maxim Proskurnya, "World Time Wallpaper"
+  (v2.4.x), from which the city offsets used to calibrate the map projection were
+  derived. <axofiber at gmail.com>
+
+Artwork licensing — IMPORTANT (read before publishing)
+------------------------------------------------------
+The raster world map under `worldtime/assets/` (`world.time.1400x1050.png`) is the
+original IBM/Lenovo ThinkPad artwork and is **copyright IBM/Lenovo**. It is bundled
+here for personal/local use only.
+
+Before publishing this repository publicly, EITHER:
+  (a) ship only the vector map (map_style = "vector", see below) and remove the raster
+      artwork under worldtime/assets/, OR
+  (b) obtain appropriate permission / rely on a defensible fair-use basis.
+
+Vector map (Phase B) — cleanly licensed, the recommended public default
+-----------------------------------------------------------------------
+`map_style = "vector"` draws the world from Natural Earth data bundled under
+`worldtime/geodata/` (ne_110m_land, ne_110m_admin_0_countries). Natural Earth is in
+the **public domain** (https://www.naturalearthdata.com/about/terms-of-use/) and is
+freely redistributable. The vector map is fully theme-able (blue / dark / custom) and
+contains no IBM/Lenovo artwork, so it is the recommended map for any public release.
+
+"ThinkPad" wordmark
+-------------------
+The optional bottom-left "ThinkPad" wordmark (config `logo = true`) is drawn as text
+and is a Lenovo trademark. It is fine for personal use; set `logo = false` for any
+public or redistributed build to avoid implying endorsement.
+
+The Python code in this repository is licensed GPL-2.0-or-later (see LICENSE),
+consistent with the GPL tribute it descends from.

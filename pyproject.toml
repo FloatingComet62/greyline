@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thinkpad-world-wallpaper-revived"
+version = "0.1.0"
+description = "A live, multi-timezone ThinkPad 'World Time' wallpaper for Wayland/X11."
+readme = "README.md"
+requires-python = ">=3.11"          # tomllib + zoneinfo (stdlib)
+license = { text = "GPL-2.0-or-later" }
+authors = [{ name = "Jotham Lim Ee Chen" }]
+dependencies = ["pillow>=9"]
+
+[project.scripts]
+thinkpad-wallpaper = "worldtime.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/cothinking-dev/thinkpad_world_wallpaper_revived"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.setuptools]
+packages = ["worldtime", "worldtime.backends"]
+
+[tool.setuptools.package-data]
+worldtime = ["assets/*.png", "default-config.toml", "geodata/*.geojson"]

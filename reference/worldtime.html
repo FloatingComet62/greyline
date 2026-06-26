@@ -1,0 +1,328 @@
+<html>
+<head>
+<title>World Time Wallpaper (Demo)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8;">
+
+<!--
+
+    IBM "World Time" active desktop tribute (v.2.4.1)
+    _________________________________________________
+
+
+    Based on "IBM" active desktop
+
+
+(C) 2006--2011  Maxim Proskurnya
+    axofiber at gmail.com
+
+    http://axofiber.no-ip.org/projects/world.time.wallpaper.en.htm
+    http://axofiber.ru/projects/world.time.wallpaper.en.htm
+
+
+    Published under the GNU Public License
+
+
+    Notes:
+    _____
+
+    Currently three interface languages are supported:
+    - English,
+    - Russian,
+    - French,
+    - Spain,
+    - German.
+
+    Supported desktop resolutions:
+      800x600, 1024x600, 1024x768, 1152x864, 1280x720, 1280x768, 1280x800, 
+      1280x1024, 1440x900, 1400x1050, 1680x1050, 1600x1200, 1920x1200
+-->
+
+<style>
+body
+{
+  margin          : 0px 0px 0px 0px;
+  background-color: #3961D2;
+  color           : #CCC;
+}
+.clockCaption
+{
+  position       : relative;
+  top            :-1em;
+  left           : 1em;
+  font-weight    : bold;
+}
+.clockCaptionAlt
+{
+  position       : relative;
+  top            :-2.5em;
+  left           : 1em;
+  font-weight    : bold;
+}
+</style>
+
+<script language="JavaScript" src="worldtime.cities.js">
+</script>
+
+<script language="JavaScript">
+
+// BackGround Image Layer Setup
+
+var BkgSizeX     = 1024;
+var BkgSizeY     = 768;
+var BkgPosX      = 0;
+var BkgPosY      = 0;
+
+var ClockSizeX   = 100;
+var ClockSizeY   = 50;
+
+var Config       = new Object;
+var TimeZonesMap = null
+var Trace        = null;
+
+var timerID      = null;
+var timerRunning = false;
+
+var daysofmonth  = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+var daysofmonthLY= [ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+
+var timerID      = null;
+var timerRunning = false;
+var PathToImages = 'opt/';
+
+function LeapYear ( year )
+{
+  return !( year & 3 ) && ( year % 100 ) || !( year % 400 );
+}
+
+function NthDay ( nth, weekday, month, year )
+{
+  if ( 0 < nth )
+    return ( nth - 1 ) * 7 + 1 + ( 7 + weekday - DayOfWeek ( ( nth - 1 ) * 7 + 1, month, year ) ) % 7;
+  if ( LeapYear ( year ) )
+    var days = daysofmonthLY[month];
+  else
+    var days = daysofmonth[month];
+  return days - ( DayOfWeek ( days, month, year ) - weekday + 7 ) % 7;
+}
+
+function DayOfWeek ( day, month, year )
+{
+  var a = Math.floor ( ( 14 - month ) / 12 );
+  var y = year - a;
+  var m = month + 12 * a - 2;
+  var d = ( day + y + Math.floor ( y / 4 ) - Math.floor ( y / 100 ) + Math.floor ( y / 400 ) + Math.floor( ( 31 * m ) / 12) ) % 7;
+  return d + 1;
+}
+
+function y2k ( number )
+{
+  return ( number < 1000 ) ? number + 1900 : number;
+}
+
+function getMS ( date )
+{
+  return Date.UTC (
+    y2k ( date.getYear() ),
+    date.getMonth(),
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    date.getSeconds()
+  );
+}
+
+function CalcDstBias ( City )
+{
+  var today        = new Date ();
+  var year         = y2k ( today.getYear() );
+  var todayMS      = getMS ( today );
+
+  if ( City['DstBias'] != 0 )
+  {
+    if ( City['DstType'] == 'relative' )
+    {
+      //                                                                                                                                                                 2:00 AM
+      var DSTstart     = new Date ( year, City['DstStart']['month'] - 1, NthDay ( City['DstStart']['nth'], City['DstStart']['weekday'], City['DstStart']['month'], year ), 2, 0, 0 );
+      var DSTend       = new Date ( year, City['DstEnd']['month'] - 1,   NthDay ( City['DstEnd']['nth'],   City['DstEnd']['weekday'],   City['DstEnd']['month'],   year ), 2, 0, 0 );
+
+      if ( getMS ( DSTstart ) <= todayMS && todayMS <= getMS ( DSTend ) )
+        return City.DstBias;
+    } 
+    else if ( City['DstType'] == 'absolute' )
+    {
+      var DSTstart     = new Date ( year, City['DstStart']['month'] - 1, City['DstStart']['day'], 2, 0, 0 );
+      var DSTend       = new Date ( year, City['DstEnd']['month'] - 1,   City['DstEnd']['day'],   2, 0, 0 );
+
+      if ( getMS ( DSTstart ) <= todayMS && todayMS <= ( DSTend ) )
+        return City.DstBias;    
+    }
+  }
+  return 0;
+}
+
+function startup ()
+{
+  InitTimeZones ();
+  runClock ();
+}
+
+function stopClock ()
+{
+  if ( timerRunning )
+  {
+    window.clearInterval ( timerID );
+    window.clearTimeout  ( timerID );
+    timerRunning = false;
+  }
+}
+
+function runClock ()
+{
+  // Make sure the clock is stopped
+  stopClock ();
+  showTime ();
+}
+
+function InitTimeZones ()
+{
+  TimeZonesMap = document.getElementById ( 'TimeZoneMap' );
+  Trace        = document.getElementById ( 'DayLightTrace' );
+  
+  Config.BackGrounds      = [         'World.time.800x600.png',        'World.time.1024x768.png',         'World.time.1024x768.png',         'World.time.1152x864.png',        'World.time.1280x960.png',          'World.time.1280x960.png',          'World.time.1400x1050.png',         'World.time.1400x1050.png',         'World.time.1680x1050.png',          'World.time.1600x1200.png',         'World.time.1920x1200.png' ];
+  if ( navigator.appName == 'Microsoft Internet Explorer' )
+  {
+    Config.AppName        = 'MS';
+    Config.DayLightTraces = [     'daylight.trace.800x600.png',     'daylight.trace.1024x768.png',     'daylight.trace.1024x768.png',     'daylight.trace.1152x864.png',    'daylight.trace.1280x960.png',     'daylight.trace.1280x960.png',      'daylight.trace.1400x1050.png',     'daylight.trace.1400x1050.png',     'daylight.trace.1680x1050.png',      'daylight.trace.1600x1200.png',     'daylight.trace.1920x1200.png' ];
+  }
+  else
+    Config.DayLightTraces = [ 'daylight.trace.800x600.moz.png', 'daylight.trace.1024x768.moz.png', 'daylight.trace.1024x768.moz.png', 'daylight.trace.1152x864.moz.png', 'daylight.trace.1280x960.moz.png', 'daylight.trace.1280x960.moz.png', 'daylight.trace.1400x1050.moz.png',  'daylight.trace.1400x1050.moz.png', 'daylight.trace.1680x1050.moz.png', 'daylight.trace.1600x1200.moz.png', 'daylight.trace.1920x1200.moz.png' ];
+
+  Config.MapRatioSizeX  = 1400;
+  Config.MapRatioSizeY  = 1050;
+  Config.MapWidth       = [ 800, 1024, 1024, 1152, 1280, 1280, 1440, 1400, 1680, 1600, 1920 ];
+  Config.MapHeight      = [ 600,  600,  768,  864,  800,  960,  900, 1050, 1050, 1200, 1200 ];
+  Config.MapTopOffset   = [   0,  -84,    0,    0,  -75,    0,  -88,    0, -100,    0, -120 ];
+  Config.Locale         = Config.AppName == 'MS' ? navigator.userLanguage.substr (0, 2) : navigator.language.substr (0, 2);
+
+  // Default locale is set to "en"
+  if ( Config.Locale != 'en' && Config.Locale != 'ru' && Config.Locale != 'fr' && Config.Locale != 'es' && Config.Locale != 'de' )
+    Config.Locale = 'en';
+
+  Config.Resolution = 0;
+  for ( var i = 0; i < Config.MapWidth.length; ++i ) 
+  {
+    if ( window.screen.width == Config.MapWidth[i] && window.screen.height == Config.MapHeight[i] )
+      Config.Resolution = i;
+  }
+  Config.xRatio               = Config.MapWidth[Config.Resolution] / Config.MapRatioSizeX;
+  Config.yRatio               = Config.xRatio;
+  Config.screenWidth          = window.screen.width;
+  Config.screenHeight         = window.screen.height;
+
+  TimeZonesMap.style.position = 'absolute';
+  TimeZonesMap.style.left     = 0;
+  TimeZonesMap.style.top      = 0;
+  TimeZonesMap.style.backgroundImage      = "url('" + PathToImages + Config.BackGrounds[Config.Resolution] + "')";
+  TimeZonesMap.style.backgroundPositionY  = Config.MapTopOffset[Config.Resolution] + 'px';
+  TimeZonesMap.style.backgroundRepeat     = 'no-repeat';
+  TimeZonesMap.style.width    = Config.MapWidth  [Config.Resolution];
+  TimeZonesMap.style.height   = Config.MapHeight [Config.Resolution];
+
+  Trace.style.left            = 0;
+  Trace.style.top             = 0;
+  Trace.style.width           = 6000;
+  Trace.style.height          = Config.MapHeight[Config.Resolution];
+  Trace.style.backgroundImage = "url('" + PathToImages + Config.DayLightTraces[Config.Resolution] + "')";
+
+  CitiesLength = Config.AppName == 'MS' ? Cities.length - 1 : Cities.length;
+  for ( i = 0; i < CitiesLength; ++i )
+  {
+    Clock = document.createElement ( 'div' );
+    Clock.id = 'Clock' + i;
+    Clock.style.position   = 'absolute';
+    Clock.style.width      = ClockSizeX + 'px';
+    Clock.style.height     = ClockSizeY + 'px';
+    Clock.style.fontFamily = 'arial, helvetica, sans-serif';
+    Clock.style.fontSize   = 'xx-small';
+    Clock.style.zIndex     = 2;
+    Clock.style.left       = Cities[i].OffsetX * Config.xRatio;
+    Clock.style.top        = Cities[i].OffsetY * Config.yRatio + Config.MapTopOffset[Config.Resolution];
+    TimeZonesMap.appendChild (Clock);
+  }
+
+  Config.TimeFormat = TimeFormat;
+}
+
+function addLeadingZero ( val )
+{
+  return ( val <= 9 ) ? "0" + val : val;
+}
+
+function convertLocalTime ( hours, minutes )
+{
+  minutes = addLeadingZero ( minutes );
+  if ( Config.TimeFormat[Config.Locale] == 24 )
+    return hours + ":" + minutes;
+  else
+  {
+    ampm = 12 < hours ? " PM" : " AM";
+    hours = ( hours + 11 ) % 12 + 1;
+    return hours + ":" + minutes + ampm;
+  }
+}
+
+function showTime()
+{
+  var now        = new Date();
+  var GmtHours   = now.getUTCHours ();
+  var GmtMinutes = now.getUTCMinutes ();
+
+  // Set LocalTime indicator
+  var CurrentTimeZoneOffset = -now.getTimezoneOffset () / 60;
+
+  // Set Clocks
+  CitiesLength = Config.AppName == 'MS' ? Cities.length - 1 : Cities.length;
+  for ( i = 0; i < CitiesLength; ++i )
+  {
+    Cities[i].Hours = GmtHours + Math.floor ( Cities[i].GmtBias + GmtMinutes / 60 ) + CalcDstBias ( Cities[i] );
+    if ( Cities[i].Hours < 0 ) 
+      Cities[i].Hours += 24;
+    Cities[i].Hours  %= 24;
+    GMfracOffset      = ( Cities[i].GmtBias - Math.floor ( Cities[i].GmtBias ) ) * 60;
+    Cities[i].Minutes = ( GmtMinutes + GMfracOffset ) % 60;
+    var Clock         = document.getElementById ( 'Clock' + i );
+    var clockClass    = ( Cities[i].LiftLabel !== undefined && Cities[i].LiftLabel == '-1em' ) ? 'clockCaptionAlt' : 'clockCaption';
+    var clockDot      = 'dot.gif';
+    if ( Cities[i].GmtBias + CalcDstBias ( Cities[i] ) == CurrentTimeZoneOffset )
+    {
+      clockDot        = 'dot2.gif';
+      Clock.style.color = "#FF3333";
+    }
+    Clock.innerHTML   = '<img src="' + PathToImages + clockDot + '" width=8 height=8><div class=' + clockClass + '>' + Cities[i]['Name'][Config.Locale] + '<br>' + convertLocalTime ( Cities[i].Hours, Cities[i].Minutes ) + '</div>';
+  }
+
+  // Update daylight shadow
+  HourLength = Config.MapRatioSizeX / 22 * Config.xRatio;
+  indent     = ( 12 + 3.5 ) * HourLength - ( GmtHours + GmtMinutes / 60 ) * HourLength;  // 3.5 hours --- most left side of the map
+  if ( 0 < indent ) indent -= 24 * HourLength;
+  Trace.style.left = indent;
+  timerID = window.setTimeout ( "showTime()", 60000 - ( new Date() ).getTime() % 60000 );
+  timerRunning |= true; 
+}
+
+//-->
+</script>
+</head>
+
+<body onload="startup ()">
+
+<div id=TimeZoneMap>
+</div>
+
+<div style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden;">
+<div style="position:relative;filter:Alpha(Opacity=30,FinishOpacity=30,Style=0);" id=DayLightTrace>
+</div>
+</div>
+
+</body>
+</html>

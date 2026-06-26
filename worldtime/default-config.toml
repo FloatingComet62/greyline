@@ -1,0 +1,78 @@
+# Default configuration for thinkpad_world_wallpaper_revived.
+# User config at ~/.config/thinkpad-wallpaper/config.toml is merged over this
+# (top-level keys override; a user [[city]] list replaces this one entirely).
+
+backend = "auto"            # auto | sway | swww | hyprpaper | x11 (feh/xwallpaper)
+map_style = "raster"        # raster (nostalgic ThinkPad art) | vector (scalable, themeable)
+theme = "thinkpad-blue"     # thinkpad-blue | dark  (dark suits map_style=vector)
+format = "24h"              # 24h | 12h
+logo = true                 # ThinkPad wordmark, bottom-left (Lenovo trademark — see NOTICE)
+bar_height = 0              # px reserved at the bottom for a status bar (lifts the logo)
+
+[twilight]
+bands = true               # discrete civil/nautical/astronomical bands
+darkness = "subtle"        # subtle | medium | dramatic
+
+[home]
+tz = "auto"                # "auto" = system timezone, or e.g. "Asia/Kuala_Lumpur"
+column_highlight = true
+
+[[city]]
+name = "San Francisco"
+lat = 37.77
+lon = -122.42
+tz = "America/Los_Angeles"
+
+[[city]]
+name = "New York"
+lat = 40.71
+lon = -74.01
+tz = "America/New_York"
+
+[[city]]
+name = "Buenos Aires"
+lat = -34.61
+lon = -58.38
+tz = "America/Argentina/Buenos_Aires"
+
+[[city]]
+name = "London"
+lat = 51.51
+lon = -0.13
+tz = "Europe/London"
+
+[[city]]
+name = "Paris"
+lat = 48.85
+lon = 2.35
+tz = "Europe/Paris"
+
+[[city]]
+name = "Moscow"
+lat = 55.76
+lon = 37.62
+tz = "Europe/Moscow"
+
+[[city]]
+name = "Beijing"
+lat = 39.90
+lon = 116.41
+tz = "Asia/Shanghai"
+
+[[city]]
+name = "Tokyo"
+lat = 35.68
+lon = 139.69
+tz = "Asia/Tokyo"
+
+[[city]]
+name = "Jakarta"
+lat = -6.21
+lon = 106.85
+tz = "Asia/Jakarta"
+
+[[city]]
+name = "Sydney"
+lat = -33.87
+lon = 151.21
+tz = "Australia/Sydney"
