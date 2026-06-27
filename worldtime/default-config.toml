@@ -17,6 +17,9 @@ darkness = "subtle"        # subtle | medium | dramatic
 tz = "auto"                # "auto" = system timezone, or e.g. "Asia/Kuala_Lumpur"
 column_highlight = true
 
+# Each [[city]] takes name/lat/lon/tz. Optional: label_side ("left"/"right"/"above"/
+# "below") nudges that city's label to the chosen side of its dot (it still falls back to
+# avoid overlapping or running off-screen).
 [[city]]
 name = "San Francisco"
 lat = 37.77

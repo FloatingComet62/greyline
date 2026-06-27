@@ -263,24 +263,28 @@ def _place_labels(items, obstacles, bounds, scale):
 
     Greedy: home first, then left-to-right. Each label picks the candidate side with the
     least overlap against obstacles (dots, logo, screen edges) and already-placed labels.
-    The home label prefers the LEFT of its dot (others prefer the right).
+    A city's `label_side` ("left"/"right"/"above"/"below") is tried first; it still falls
+    back to another side rather than overlap badly or run off-screen.
     """
     gap = round(6 * scale)
     placed = list(obstacles)
     order = sorted(range(len(items)), key=lambda i: (not items[i]["is_home"], items[i]["px"]))
+    default_sides = ["right", "left", "below", "above", "below-right", "below-left"]
     for i in order:
         it = items[i]
         px, py, w, h, g = it["px"], it["py"], it["w"], it["h"], it["dotr"] + gap
-        right = (px + g, py - h / 2)
-        left = (px - g - w, py - h / 2)
-        candidates = [
-            left if it["is_home"] else right,   # home prefers left, others right
-            right if it["is_home"] else left,
-            (px - w / 2, py + g),       # below
-            (px - w / 2, py - g - h),   # above
-            (px + g, py + g),           # below-right
-            (px - g - w, py + g),       # below-left
-        ]
+        anchors = {
+            "right": (px + g, py - h / 2),
+            "left": (px - g - w, py - h / 2),
+            "below": (px - w / 2, py + g),
+            "above": (px - w / 2, py - g - h),
+            "below-right": (px + g, py + g),
+            "below-left": (px - g - w, py + g),
+        }
+        pref = it.get("side")
+        sides = ([pref] + [s for s in default_sides if s != pref]
+                 if pref in anchors else default_sides)
+        candidates = [anchors[s] for s in sides]
         best, best_pen = None, None
         for bx, by in candidates:
             box = (bx, by, bx + w, by + h)
@@ -416,6 +420,7 @@ def render(
             "c": c, "is_home": is_home, "f": f, "text": text, "px": px, "py": py,
             "ox": bb[0], "oy": bb[1], "w": bb[2] - bb[0], "h": bb[3] - bb[1],
             "dotr": round((6 if is_home else 4) * scale),
+            "side": c.get("label_side"),  # optional placement preference
         })
 
     # Place labels avoiding dots, the logo box, the screen edges and each other.
