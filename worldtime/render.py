@@ -138,6 +138,29 @@ def _raster_projection(out_w, out_h, anchor):
     return proj, (sc, cx, cy)
 
 
+# Vector-map framing. Plain equirectangular over the FULL globe so nothing is cropped —
+# the raster's tighter ~333deg window cut off the mid-Pacific (Alaska, Hawaii, the
+# Aleutians). Latitude uses the raster art's px-per-degree ratio (|BY|/|AX|), so
+# continents keep their familiar (slightly tall) shape rather than the squashed look of a
+# 1:1 equirectangular. Centred west of Greenwich so the seam falls in the empty Bering/
+# Pacific and the Americas (incl. Alaska) sit comfortably inside the left edge.
+VECTOR_LON_CENTER = 12.0
+VECTOR_LAT_CENTER = 14.0  # vertical centre ≈ land midpoint (Antarctica dropped), balances the margins
+
+
+def _vector_projection(out_w, out_h):
+    ppd_lon = out_w / 360.0
+    ppd_lat = ppd_lon * (abs(geo.BY) / abs(geo.AX))
+    cx, cy = out_w / 2.0, out_h / 2.0
+    return Projection(
+        to_px=lambda lon, lat: (cx + (lon - VECTOR_LON_CENTER) * ppd_lon,
+                                cy + (VECTOR_LAT_CENTER - lat) * ppd_lat),
+        x_to_lon=lambda x: VECTOR_LON_CENTER + (x - cx) / ppd_lon,
+        lat_to_y=lambda lat: cy + (VECTOR_LAT_CENTER - lat) * ppd_lat,
+        scale=out_w / geo.REF_W,
+    )
+
+
 def _terminator_polygon(elevation, sublat, sublon, proj, w, h, step=3, day_side=False):
     """Polygon (output px) for the region darker than `elevation` (or the lit side)."""
     pts = []
@@ -353,9 +376,9 @@ def render(
 
     # Build the map base + a projection (lon/lat -> output px) for the chosen style.
     if map_style == "vector":
-        # Share the raster's calibrated frame so the vector map, terminator, column
-        # highlight and city clocks all line up — only the base imagery differs.
-        proj, _crop = _raster_projection(out_w, out_h, crop_anchor)
+        # Full-globe equirectangular (see _vector_projection) — the terminator, column
+        # highlight and city clocks all share this one mapping, so they line up.
+        proj = _vector_projection(out_w, out_h)
         scale = proj.scale
         grid_font = _load_font(max(8, round(11 * scale)), FONT_CANDIDATES, font_path)
         # The home highlight fills the real zone polygon here (like the GMT column),
