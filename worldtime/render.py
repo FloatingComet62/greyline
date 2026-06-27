@@ -249,10 +249,11 @@ def _mono_logo(img, rgb):
     return out
 
 
-def _draw_logo(canvas, theme, logo_path, logo_color=None):
-    """Composite the logo, pinned to the bottom-left CORNER of the wallpaper (independent
-    of the map framing or any status bar). Returns its bbox or None.
+def _draw_logo(canvas, theme, logo_path, bar_height=0, logo_color=None):
+    """Composite the logo, pinned to the bottom-left CORNER of the wallpaper (anchored to
+    the canvas, independent of the map framing). Returns its bbox or None.
 
+    `bar_height` lifts it above a status bar overlaying the bottom of the wallpaper.
     `logo_color` (hex) recolours the whole logo to a flat silhouette (e.g. all-white);
     otherwise a dark-theme `logo_invert` recolours just the wordmark to light while
     keeping the IBM colour bars.
@@ -270,7 +271,7 @@ def _draw_logo(canvas, theme, logo_path, logo_color=None):
     elif theme.get("logo_invert"):
         logo = _recolor_dark(logo, tuple(theme.get("logo", (235, 235, 235))))
     pad = round(canvas.width * 0.018)
-    x, y = pad, canvas.height - target_h - pad
+    x, y = pad, canvas.height - target_h - pad - bar_height
     canvas.alpha_composite(logo, (x, y))
     return (x, y, x + target_w, y + target_h)
 
@@ -418,7 +419,7 @@ def render(
     # Logo first — its box becomes an obstacle so no label hides behind it.
     obstacles = []
     if logo:
-        b = _draw_logo(canvas, th, logo_path, logo_color)
+        b = _draw_logo(canvas, th, logo_path, bar_height, logo_color)
         if b:
             obstacles.append(b)
 
