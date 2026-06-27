@@ -24,7 +24,9 @@ systemd timer (*:*:00) ─▶ thinkpad-wallpaper (≈100 ms, then exits)
   nautical / astronomical twilight bands** (subtle by default, tunable).
 - **Any resolution / multi-monitor / HiDPI** — each output rendered at native pixels.
 - **Two map styles** — `raster` (the nostalgic ThinkPad artwork) or `vector` (drawn from
-  public-domain **Natural Earth** data, crisp at any resolution, fully themeable).
+  public-domain **Natural Earth** data, crisp at any resolution, fully themeable; with
+  honest zig-zag timezone boundaries, a green GMT column, and a red International Date
+  Line, framed to match the raster).
 - **Theming** — `thinkpad-blue` and a sleek `dark` preset, plus custom.
 - **Smart label placement** — labels auto-pick a side (right/left/above/below) to avoid
   overlapping each other, the dots, the logo, and the screen edges.

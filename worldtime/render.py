@@ -9,7 +9,7 @@ import os
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
+from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
 from . import geo, sun, vectormap
 
@@ -41,6 +41,8 @@ THEMES = {
         "border": (120, 150, 230),
         "grid": (255, 255, 255, 38),
         "grid_label": (200, 210, 255),
+        "idl": (224, 60, 60),           # red International Date Line (faithful to the art)
+        "gmt": (90, 220, 130, 64),      # green UTC+0 timezone-column fill
         "day_wash": (255, 255, 255, 10),  # per-band day-side brighten (stacked x4)
     },
     # Dark variant (Modus-Vivendi-flavoured) — intended for the vector map (Phase B).
@@ -58,6 +60,8 @@ THEMES = {
         "border": (74, 82, 100),
         "grid": (255, 255, 255, 16),
         "grid_label": (130, 138, 158),
+        "idl": (208, 72, 72),           # red International Date Line (muted for the dark map)
+        "gmt": (88, 184, 128, 52),      # green UTC+0 timezone-column fill
         "day_wash": (140, 165, 220, 18),  # per-band day-side brighten (stacked x4)
         "night_alpha": 12,                # gentle night darkening → low contrast, brighter darks
         "logo_invert": True,              # recolour the dark wordmark to light on this theme
@@ -134,26 +138,6 @@ def _raster_projection(out_w, out_h, anchor):
     return proj, (sc, cx, cy)
 
 
-CENTER_LAT = 12.0  # vertical centre of the vector map (the land midpoint, Antarctica dropped)
-
-
-def _equirect_projection(out_w, out_h):
-    """Undistorted (1:1 deg/px) equirectangular, full longitude, centred on CENTER_LAT.
-
-    Longitude fills the width; latitude keeps the same px-per-degree so continents are
-    not stretched. Centring on the land midpoint (not the equator) balances the seamless
-    ocean margins top/bottom now that Antarctica is dropped.
-    """
-    ppd = out_w / 360.0
-    y0 = out_h / 2.0 - (90.0 - CENTER_LAT) * ppd
-    return Projection(
-        to_px=lambda lon, lat: ((lon + 180.0) * ppd, (90.0 - lat) * ppd + y0),
-        x_to_lon=lambda x: x / ppd - 180.0,
-        lat_to_y=lambda lat: (90.0 - lat) * ppd + y0,
-        scale=out_w / geo.REF_W,
-    )
-
-
 def _terminator_polygon(elevation, sublat, sublon, proj, w, h, step=3, day_side=False):
     """Polygon (output px) for the region darker than `elevation` (or the lit side)."""
     pts = []
@@ -167,33 +151,57 @@ def _terminator_polygon(elevation, sublat, sublon, proj, w, h, step=3, day_side=
     return pts
 
 
+def _blend_region(base, layer_rgb, op):
+    """Apply a blend `op` (ImageChops.multiply / .screen) of `layer_rgb` onto `base`,
+    preserving base's alpha. The layer is a no-op colour everywhere except the band
+    polygon (white for multiply, black for screen), so only that region changes."""
+    mixed = op(base.convert("RGB"), layer_rgb)
+    mixed.putalpha(base.getchannel("A"))
+    return mixed
+
+
 def _overlay_night(base, dt, theme, bands, alpha, proj):
     """Composite the day/night terminator with stepped twilight bands.
 
-    Two stacks share the civil/nautical/astronomical elevations, so each twilight band
-    is a distinct step:
-      - day-side LIGHT washes (brighten toward the sun) — the only thing visible on a
-        near-black map, and what makes the bands apparent;
-      - night-side DARK washes (deepen toward midnight) — gentle, to keep contrast low.
+    Rather than alpha-compositing an opaque dark scrim (a "normal" blend, which mutes
+    every pixel toward the same colour and so flattens the map's GMT grid lines and
+    country borders), each band is mixed into the base multiplicatively/screen — a colour
+    mix that tints toward night / brightens toward day while PRESERVING the contrast of
+    fine lines underneath (works for both the raster art and the vector map):
+      - day-side LIGHT washes (SCREEN toward the sun) — brighten the lit hemisphere;
+      - night-side DARK washes (MULTIPLY toward midnight) — deepen the dark hemisphere.
+    The civil/nautical/astronomical elevations are stacked, so each twilight band is a
+    distinct step.
     """
     w, h = base.size
     sublat, sublon = sun.subsolar_point(dt)
     elevations = TWILIGHT_ELEVATIONS if bands else (0.0,)
 
-    def stack(day_side, fill):
+    def stack(day_side, base_color, tint, op):
         nonlocal base
         for elev in elevations:
-            layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            layer = Image.new("RGB", (w, h), base_color)
             ImageDraw.Draw(layer).polygon(
                 _terminator_polygon(elev, sublat, sublon, proj, w, h, day_side=day_side),
-                fill=fill,
+                fill=tint,
             )
-            base = Image.alpha_composite(base, layer)
+            base = _blend_region(base, layer, op)
 
-    if theme.get("day_wash"):
-        stack(day_side=True, fill=tuple(theme["day_wash"]))
-    if alpha > 0 and theme.get("night"):
-        stack(day_side=False, fill=tuple(theme["night"]) + (alpha,))
+    # Day side: SCREEN a light tint (the wash colour scaled by its alpha); black = no-op.
+    dw = theme.get("day_wash")
+    if dw:
+        a = dw[3] if len(dw) > 3 else 255
+        tint = tuple(round(c * a / 255) for c in dw[:3])
+        stack(day_side=True, base_color=(0, 0, 0), tint=tint, op=ImageChops.screen)
+
+    # Night side: MULTIPLY toward the night colour; white = no-op. The per-band multiplier
+    # is the night colour pulled toward white by `alpha` (so a stack of bands darkens
+    # progressively without crushing line contrast the way an opaque scrim would).
+    night = theme.get("night")
+    if alpha > 0 and night:
+        t = alpha / 255.0
+        tint = tuple(round(255 - (255 - c) * t) for c in night)
+        stack(day_side=False, base_color=(255, 255, 255), tint=tint, op=ImageChops.multiply)
     return base
 
 
@@ -331,7 +339,9 @@ def render(
 
     # Build the map base + a projection (lon/lat -> output px) for the chosen style.
     if map_style == "vector":
-        proj = _equirect_projection(out_w, out_h)
+        # Share the raster's calibrated frame so the vector map, terminator, column
+        # highlight and city clocks all line up — only the base imagery differs.
+        proj, _crop = _raster_projection(out_w, out_h, crop_anchor)
         scale = proj.scale
         grid_font = _load_font(max(8, round(11 * scale)), FONT_CANDIDATES, font_path)
         canvas = vectormap.build_base(
