@@ -145,7 +145,7 @@ def _raster_projection(out_w, out_h, anchor):
 # 1:1 equirectangular. Centred west of Greenwich so the seam falls in the empty Bering/
 # Pacific and the Americas (incl. Alaska) sit comfortably inside the left edge.
 VECTOR_LON_CENTER = 12.0
-VECTOR_LAT_CENTER = 14.0  # vertical centre ≈ land midpoint (Antarctica dropped), balances the margins
+VECTOR_LAT_CENTER = 0.0  # equator-centred → poles at the top/bottom edges (pole-to-pole on a 16:10 panel)
 
 
 def _vector_projection(out_w, out_h):
@@ -249,13 +249,13 @@ def _mono_logo(img, rgb):
     return out
 
 
-def _draw_logo(canvas, theme, logo_path, bar_height=0, logo_color=None):
-    """Composite the bottom-left logo image. Returns its bbox or None.
+def _draw_logo(canvas, theme, logo_path, logo_color=None):
+    """Composite the logo, pinned to the bottom-left CORNER of the wallpaper (independent
+    of the map framing or any status bar). Returns its bbox or None.
 
-    `bar_height` reserves space at the bottom (e.g. for a status bar overlaying the
-    wallpaper) so the logo sits above it. `logo_color` (hex) recolours the whole logo to
-    a flat silhouette (e.g. all-white); otherwise a dark-theme `logo_invert` recolours
-    just the wordmark to light while keeping the IBM colour bars.
+    `logo_color` (hex) recolours the whole logo to a flat silhouette (e.g. all-white);
+    otherwise a dark-theme `logo_invert` recolours just the wordmark to light while
+    keeping the IBM colour bars.
     """
     try:
         logo = Image.open(logo_path).convert("RGBA")
@@ -270,7 +270,7 @@ def _draw_logo(canvas, theme, logo_path, bar_height=0, logo_color=None):
     elif theme.get("logo_invert"):
         logo = _recolor_dark(logo, tuple(theme.get("logo", (235, 235, 235))))
     pad = round(canvas.width * 0.018)
-    x, y = pad, canvas.height - target_h - pad - bar_height
+    x, y = pad, canvas.height - target_h - pad
     canvas.alpha_composite(logo, (x, y))
     return (x, y, x + target_w, y + target_h)
 
@@ -418,7 +418,7 @@ def render(
     # Logo first — its box becomes an obstacle so no label hides behind it.
     obstacles = []
     if logo:
-        b = _draw_logo(canvas, th, logo_path, bar_height, logo_color)
+        b = _draw_logo(canvas, th, logo_path, logo_color)
         if b:
             obstacles.append(b)
 

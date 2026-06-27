@@ -23,15 +23,10 @@ from PIL import Image, ImageDraw
 
 GEO_DIR = os.path.join(os.path.dirname(__file__), "geodata")
 
-# Rings lying entirely south of this latitude are dropped (Antarctica) so the map's
-# bottom is clean ocean, symmetric with the Arctic-ocean top. Applies to LAND/BORDERS
-# only — timezone boundaries keep their full vertical extent (the southern convergence
-# falls below the frame), with polar-cap edges filtered per-segment instead.
-ANTARCTICA_LAT = -55.0
-
 # Latitude beyond which a timezone polygon edge is treated as an artificial polar cap
-# (the data closes ocean zones with a horizontal edge at ±90); such edges are not drawn.
-POLAR_CAP_LAT = 84.0
+# (the data closes ocean zones with a HORIZONTAL edge at ±90); only such near-horizontal
+# cap edges are dropped — the vertical zone lines still run pole to pole.
+POLAR_CAP_LAT = 89.0
 # Longitude beyond which an edge is treated as an antimeridian split seam (NE cuts zones
 # at ±180); these straight seams are skipped so the red IDL is the only date-line marking.
 SEAM_LON = 179.5
@@ -128,22 +123,17 @@ def build_base(out_w, out_h, theme, font, to_px, ss=2, home_offset=None):
         img = Image.alpha_composite(img, layer)
         d = ImageDraw.Draw(img)
 
-    def keep(ring):  # land/border Antarctica drop
-        return max(lat for _lon, lat in ring) >= ANTARCTICA_LAT
-
-    # Land fill.
+    # Land fill (Antarctica included — the equator-centred frame puts its −90 data edge at
+    # the very bottom, so it reads as the south pole rather than an ugly mid-map cut-off).
     land = tuple(theme["land"]) + (255,)
     for ring in _outer_rings("ne_110m_land.geojson"):
-        if keep(ring):
-            for c in wrap_copies([px(lon, lat) for lon, lat in ring]):
-                d.polygon(c, fill=land)
+        for c in wrap_copies([px(lon, lat) for lon, lat in ring]):
+            d.polygon(c, fill=land)
 
     # Country borders (thin strokes).
     border = tuple(theme["border"]) + (255,)
     bw = max(1, round(ss))
     for ring in _outer_rings("ne_110m_admin_0_countries.geojson"):
-        if not keep(ring):
-            continue
         pts = [px(lon, lat) for lon, lat in ring]
         for c in wrap_copies(pts):
             d.line(c + [c[0]], fill=border, width=bw)
