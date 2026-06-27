@@ -58,7 +58,7 @@ THEMES = {
         "ocean": (11, 14, 20),          # #0b0e14
         "land": (30, 34, 43),
         "border": (74, 82, 100),
-        "grid": (255, 255, 255, 16),
+        "grid": (255, 255, 255, 48),
         "grid_label": (130, 138, 158),
         "idl": (208, 72, 72),           # red International Date Line (muted for the dark map)
         "gmt": (88, 184, 128, 52),      # green UTC+0 timezone-column fill
@@ -337,6 +337,14 @@ def render(
     home_rgb = _hex(home_color) or tuple(th["home"])  # accent colour for the home city
     out_w, out_h = out_size or (geo.REF_W, geo.REF_H)
 
+    # Home city + its current UTC offset (used to highlight its timezone column).
+    home = next((c for c in cities if c.get("home")), None)
+    home_offset = None
+    if home and column_highlight:
+        off = dt.astimezone(ZoneInfo(home["tz"])).utcoffset()
+        if off is not None:
+            home_offset = off.total_seconds() / 3600.0
+
     # Build the map base + a projection (lon/lat -> output px) for the chosen style.
     if map_style == "vector":
         # Share the raster's calibrated frame so the vector map, terminator, column
@@ -344,8 +352,10 @@ def render(
         proj, _crop = _raster_projection(out_w, out_h, crop_anchor)
         scale = proj.scale
         grid_font = _load_font(max(8, round(11 * scale)), FONT_CANDIDATES, font_path)
+        # The home highlight fills the real zone polygon here (like the GMT column),
+        # so the straight-band fallback below is skipped for the vector style.
         canvas = vectormap.build_base(
-            out_w, out_h, th, grid_font, proj.to_px
+            out_w, out_h, th, grid_font, proj.to_px, home_offset=home_offset
         ).convert("RGBA")
     else:
         proj, (sc, cx, cy) = _raster_projection(out_w, out_h, crop_anchor)
@@ -360,9 +370,9 @@ def render(
         scaled = base.resize((round(geo.REF_W * sc), round(geo.REF_H * sc)), Image.LANCZOS)
         canvas = scaled.crop((round(cx), round(cy), round(cx) + out_w, round(cy) + out_h))
 
-    # Home timezone-column highlight (output space; width = one hour of longitude here).
-    home = next((c for c in cities if c.get("home")), None)
-    if column_highlight and home:
+    # Home timezone-column highlight for the RASTER style (a straight band, one hour of
+    # longitude wide). The vector style fills the real zone polygon in build_base instead.
+    if column_highlight and home and map_style != "vector":
         hx, _hy = proj.to_px(home["lon"], home["lat"])
         x0, _ = proj.to_px(home["lon"] - 7.5, home["lat"])
         x1, _ = proj.to_px(home["lon"] + 7.5, home["lat"])

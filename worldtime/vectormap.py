@@ -93,14 +93,15 @@ def _named_lines(filename, name_substr):
     return segs
 
 
-def build_base(out_w, out_h, theme, font, to_px, ss=2):
+def build_base(out_w, out_h, theme, font, to_px, ss=2, home_offset=None):
     """Render the vector world map base (ocean, land, borders, timezone boundaries).
 
     `to_px(lon, lat) -> (x, y)` is the output-space projection (supplied by render so the
     map, terminator and clocks share one mapping). `theme` provides
-    ocean/land/border/grid/grid_label/gmt/idl colours. `ss` is the supersampling factor.
-    The whole canvas is filled with ocean first, so any vertical margins read as seamless
-    ocean, not letterbox bars.
+    ocean/land/border/grid/grid_label/gmt/idl/column colours. `ss` is the supersampling
+    factor. The whole canvas is filled with ocean first, so any vertical margins read as
+    seamless ocean, not letterbox bars. `home_offset` (UTC hours) highlights that zone's
+    real polygon with the `column` colour (None disables).
     """
     W, H = out_w * ss, out_h * ss
     img = Image.new("RGBA", (W, H), tuple(theme["ocean"]) + (255,))
@@ -149,17 +150,25 @@ def build_base(out_w, out_h, theme, font, to_px, ss=2):
 
     zones = _zone_features("ne_10m_time_zones.geojson")
 
-    # Green UTC+0 highlight: fill the real GMT zone polygons (honest — follows the zig-zag
-    # zone boundaries; the polar extent falls off the frame and is clipped by the canvas).
-    gmt_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    gd = ImageDraw.Draw(gmt_layer)
-    for zone, rings in zones:
-        if zone != 0:
-            continue
-        for ring in rings:
-            for c in wrap_copies([px(lon, lat) for lon, lat in ring]):
-                gd.polygon(c, fill=tuple(theme["gmt"]))
-    composite(gmt_layer)
+    def fill_zone(offset, color):
+        """Fill every timezone polygon at `offset` (UTC hours) with `color`, on its own
+        layer (honest — follows the zig-zag boundary; the polar extent falls off the
+        frame and is clipped by the canvas)."""
+        layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        zd = ImageDraw.Draw(layer)
+        for zone, rings in zones:
+            if zone is None or abs(zone - offset) > 0.01:
+                continue
+            for ring in rings:
+                for c in wrap_copies([px(lon, lat) for lon, lat in ring]):
+                    zd.polygon(c, fill=tuple(color))
+        composite(layer)
+
+    # Green UTC+0 column (GMT) + the home city's timezone column — both fill the real zone
+    # polygons so the highlight follows the zig-zag boundaries, not a straight band.
+    fill_zone(0, theme["gmt"])
+    if home_offset is not None:
+        fill_zone(home_offset, theme["column"])
 
     # Timezone boundaries: each zone polygon's meridional edges, drawn as the grid. Polar
     # caps (horizontal edges at ±90) and antimeridian split seams (at ±180) are skipped so
