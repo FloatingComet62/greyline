@@ -1,0 +1,37 @@
+name: Publish to PyPI
+
+# Publishes on every GitHub release. Uses PyPI Trusted Publishing (OIDC) —
+# no API token stored anywhere. Configure the trusted publisher once at
+# https://pypi.org/manage/project/greyline/settings/publishing/ with:
+#   owner=cothinking-dev  repo=greyline  workflow=publish.yml  environment=pypi
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      # Guard against re-publishing an existing version (PyPI rejects duplicates):
+      # the release tag must match the version in pyproject.toml.
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # required for OIDC trusted publishing; nothing else needed
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
