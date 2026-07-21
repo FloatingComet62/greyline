@@ -1,7 +1,7 @@
 """Configuration loading + system timezone detection (stdlib only: tomllib).
 
 Merges the shipped default-config.toml with the user's
-~/.config/thinkpad-wallpaper/config.toml (XDG-aware). Resolves the home timezone
+~/.config/greyline/config.toml (XDG-aware). Resolves the home timezone
 ("auto" => system tz) and flags the matching city as home.
 """
 import os
@@ -17,7 +17,7 @@ def _xdg_config_home():
 
 
 def user_config_path():
-    return os.path.join(_xdg_config_home(), "thinkpad-wallpaper", "config.toml")
+    return os.path.join(_xdg_config_home(), "greyline", "config.toml")
 
 
 def system_timezone():
@@ -88,7 +88,7 @@ def render_kwargs(cfg):
     tw = cfg.get("twilight", {})
     home = cfg.get("home", {})
     return {
-        "theme": cfg.get("theme", "thinkpad-blue"),
+        "theme": cfg.get("theme", "dark"),
         "fmt": cfg.get("format", "24h"),
         "twilight_bands": bool(tw.get("bands", True)),
         "darkness": tw.get("darkness", "subtle"),
@@ -98,9 +98,11 @@ def render_kwargs(cfg):
         "label_bg_alpha": int(
             cfg.get("label_bg_alpha", 130 if cfg.get("label_background", True) else 0)
         ),
-        "map_style": cfg.get("map_style", "raster"),  # raster (Phase A) | vector (Phase B)
-        "logo": bool(cfg.get("logo", True)),  # ThinkPad wordmark, bottom-left
+        "map_style": cfg.get("map_style", "vector"),  # vector (default) | raster (bring your own art)
+        "logo": bool(cfg.get("logo", True)),  # draw the bottom-left corner logo
+        "logo_path": cfg.get("logo_path"),  # custom logo image (default: bundled Tux)
         "logo_color": cfg.get("logo_color"),  # hex → flat-colour (e.g. all-white) logo
+        "logo_invert": bool(cfg.get("logo_invert", False)),  # recolour dark pixels to light
         "bar_height": int(cfg.get("bar_height", 0)),  # px reserved at bottom for a status bar
         "desaturate": bool(cfg.get("desaturate", False)),  # grayscale the raster map
     }

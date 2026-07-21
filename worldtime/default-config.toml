@@ -1,12 +1,14 @@
-# Default configuration for thinkpad_world_wallpaper_revived.
-# User config at ~/.config/thinkpad-wallpaper/config.toml is merged over this
+# Default configuration for greyline.
+# User config at ~/.config/greyline/config.toml is merged over this
 # (top-level keys override; a user [[city]] list replaces this one entirely).
 
 backend = "auto"            # auto | sway | swww | hyprpaper | x11 (feh/xwallpaper)
-map_style = "raster"        # raster (nostalgic ThinkPad art) | vector (scalable, themeable)
-theme = "thinkpad-blue"     # thinkpad-blue | dark  (dark suits map_style=vector)
+map_style = "vector"        # vector (scalable, themeable) | raster (needs your own map art, see NOTICE)
+theme = "dark"              # dark | blue
 format = "24h"              # 24h | 12h
-logo = true                 # ThinkPad wordmark, bottom-left (Lenovo trademark — see NOTICE)
+logo = true                 # draw the bottom-left corner logo (bundled default: Tux)
+# logo_path = "/path/to/your/logo.png"   # swap in your own logo (PNG with transparency)
+# logo_invert = false        # recolour a dark logo's near-black pixels to light (for dark logos)
 bar_height = 0              # px reserved at the bottom for a status bar (lifts the logo)
 
 [twilight]

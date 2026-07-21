@@ -1,4 +1,5 @@
 """End-to-end smoke: both map styles produce an RGB image of the requested size."""
+import os
 from datetime import datetime, timezone
 
 import pytest
@@ -14,6 +15,8 @@ DT = datetime(2024, 6, 20, 9, 30, tzinfo=timezone.utc)
 
 @pytest.mark.parametrize("style", ["raster", "vector"])
 def test_render_returns_rgb_at_size(style):
+    if style == "raster" and not os.path.isfile(render.BASE_1400):
+        pytest.skip("raster map artwork not bundled (IBM/Lenovo art, see NOTICE)")
     img = render.render(CITIES, dt=DT, out_size=(480, 300), map_style=style)
     assert img.size == (480, 300)
     assert img.mode == "RGB"

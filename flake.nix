@@ -1,5 +1,5 @@
 {
-  description = "Live, multi-timezone ThinkPad 'World Time' wallpaper for Wayland/X11";
+  description = "greyline — a live, multi-timezone world-time desktop wallpaper for Wayland/X11";
 
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
@@ -16,7 +16,7 @@
       mkPackage =
         pkgs:
         pkgs.python3Packages.buildPythonApplication {
-          pname = "thinkpad-world-wallpaper-revived";
+          pname = "greyline";
           version = "0.1.0";
           pyproject = true;
           src = ./.;
@@ -33,9 +33,9 @@
           # pytest finds tests/.
           preCheck = "cd $NIX_BUILD_TOP/$sourceRoot";
           meta = {
-            description = "Live multi-timezone ThinkPad World Time wallpaper";
+            description = "Live multi-timezone world-time desktop wallpaper";
             license = pkgs.lib.licenses.gpl2Plus;
-            mainProgram = "thinkpad-wallpaper";
+            mainProgram = "greyline";
             platforms = pkgs.lib.platforms.unix;
           };
         };
@@ -48,7 +48,7 @@
       apps = forAll (s: {
         default = {
           type = "app";
-          program = "${self.packages.${s}.default}/bin/thinkpad-wallpaper";
+          program = "${self.packages.${s}.default}/bin/greyline";
         };
       });
 

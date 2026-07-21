@@ -27,7 +27,7 @@ def _resolve_font(family, bold=False):
 
 def _runtime_dir():
     base = os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()
-    d = os.path.join(base, "thinkpad-wallpaper")
+    d = os.path.join(base, "greyline")
     os.makedirs(d, exist_ok=True)
     return d
 
@@ -38,7 +38,7 @@ def _parse_res(s):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(prog="thinkpad-wallpaper")
+    p = argparse.ArgumentParser(prog="greyline")
     p.add_argument("--version", action="version",
                    version=f"%(prog)s {__version__}")
     p.add_argument("--config", help="path to config.toml (default: XDG location)")

@@ -6,8 +6,9 @@ Foundation; either version 2 of the License, or (at your option) any later
 version. See the full text below.
 
 This work descends from Maxim Proskurnya's GPL "World Time Wallpaper" tribute.
-The bundled ThinkPad map ARTWORK is copyright IBM/Lenovo and is NOT covered by
-this license — see the NOTICE file before redistributing.
+Bundled data/assets under third-party licenses (Natural Earth map data, the Tux
+logo) are covered by their own terms — see the NOTICE and docs/CREDITS.md files.
+The original IBM/Lenovo ThinkPad artwork is NOT bundled here (see NOTICE).
 
 ----------------------------------------------------------------------------------
 

@@ -15,7 +15,7 @@ from . import geo, sun, vectormap
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), "assets")
 BASE_1400 = os.path.join(ASSET_DIR, "world.time.1400x1050.png")
-LOGO_PNG = os.path.join(ASSET_DIR, "thinkpad_logo.png")
+LOGO_PNG = os.path.join(ASSET_DIR, "tux.png")  # default corner logo (see NOTICE for swapping it)
 
 # Twilight boundaries (solar elevation, degrees): terminator + civil/nautical/astro.
 # Each is filled as a night-side polygon; stacking translucent layers darkens the
@@ -26,8 +26,8 @@ TWILIGHT_ELEVATIONS = (0.0, -6.0, -12.0, -18.0)
 DARKNESS_ALPHA = {"subtle": 28, "medium": 40, "dramatic": 55}
 
 THEMES = {
-    "thinkpad-blue": {
-        "night": (6, 12, 34),          # deep navy overlay (faithful to the blue map)
+    "blue": {
+        "night": (6, 12, 34),          # deep navy overlay (faithful to the classic blue map)
         "text": (226, 232, 255),
         "text_stroke": (4, 8, 26, 220),
         "dot": (210, 220, 255),
@@ -36,7 +36,7 @@ THEMES = {
         "home_stroke": (40, 0, 0, 220),
         "column": (255, 255, 255, 26),  # home timezone-column highlight
         # Vector-map palette (Phase B): ocean / land / borders / timezone grid.
-        "ocean": (61, 97, 210),         # #3d61d2 — the ThinkPad blue
+        "ocean": (61, 97, 210),         # #3d61d2 — the classic blue
         "land": (42, 71, 160),
         "border": (120, 150, 230),
         "grid": (255, 255, 255, 38),
@@ -64,8 +64,7 @@ THEMES = {
         "gmt": (88, 184, 128, 52),      # green UTC+0 timezone-column fill
         "day_wash": (140, 165, 220, 18),  # per-band day-side brighten (stacked x4)
         "night_alpha": 12,                # gentle night darkening → low contrast, brighter darks
-        "logo_invert": True,              # recolour the dark wordmark to light on this theme
-        "logo": (224, 228, 238),
+        "logo": (224, 228, 238),          # target colour when logo_invert is set (dark wordmark → light)
     },
 }
 
@@ -249,14 +248,15 @@ def _mono_logo(img, rgb):
     return out
 
 
-def _draw_logo(canvas, theme, logo_path, bar_height=0, logo_color=None):
+def _draw_logo(canvas, theme, logo_path, bar_height=0, logo_color=None, logo_invert=False):
     """Composite the logo, pinned to the bottom-left CORNER of the wallpaper (anchored to
     the canvas, independent of the map framing). Returns its bbox or None.
 
     `bar_height` lifts it above a status bar overlaying the bottom of the wallpaper.
-    `logo_color` (hex) recolours the whole logo to a flat silhouette (e.g. all-white);
-    otherwise a dark-theme `logo_invert` recolours just the wordmark to light while
-    keeping the IBM colour bars.
+    `logo_color` (hex) recolours the whole logo to a flat silhouette (e.g. all-white).
+    `logo_invert` recolours the near-black pixels to light while keeping other colours —
+    handy for a dark wordmark on a dark theme; off by default so colour logos (e.g. Tux)
+    composite as-is.
     """
     try:
         logo = Image.open(logo_path).convert("RGBA")
@@ -268,7 +268,7 @@ def _draw_logo(canvas, theme, logo_path, bar_height=0, logo_color=None):
     mono = _hex(logo_color)
     if mono:
         logo = _mono_logo(logo, mono)
-    elif theme.get("logo_invert"):
+    elif logo_invert:
         logo = _recolor_dark(logo, tuple(theme.get("logo", (235, 235, 235))))
     pad = round(canvas.width * 0.018)
     x, y = pad, canvas.height - target_h - pad - bar_height
@@ -342,17 +342,18 @@ def render(
     *,
     dt=None,
     out_size=None,
-    theme="thinkpad-blue",
+    theme="dark",
     fmt="24h",
     twilight_bands=True,
     darkness="subtle",
     column_highlight=True,
     home_color=None,
     label_bg_alpha=130,
-    map_style="raster",
+    map_style="vector",
     logo=True,
-    logo_path=LOGO_PNG,
+    logo_path=None,
     logo_color=None,
+    logo_invert=False,
     bar_height=0,
     desaturate=False,
     font_path=None,
@@ -361,7 +362,8 @@ def render(
     base_path=BASE_1400,
     crop_anchor=(0.5, 1.0),
 ):
-    th = THEMES.get(theme, THEMES["thinkpad-blue"])
+    th = THEMES.get(theme, THEMES["dark"])
+    logo_path = logo_path or LOGO_PNG
     dt = dt or datetime.now(timezone.utc)
     alpha = th.get("night_alpha", DARKNESS_ALPHA.get(darkness, DARKNESS_ALPHA["subtle"]))
     home_rgb = _hex(home_color) or tuple(th["home"])  # accent colour for the home city
@@ -390,6 +392,12 @@ def render(
     else:
         proj, (sc, cx, cy) = _raster_projection(out_w, out_h, crop_anchor)
         scale = sc
+        if not os.path.isfile(base_path):
+            raise FileNotFoundError(
+                f"raster map artwork not found at {base_path}. The IBM/Lenovo 'World Time' "
+                "art is not bundled (see NOTICE); use map_style=\"vector\" or supply your own "
+                "1400x1050 map via base_path."
+            )
         base = Image.open(base_path).convert("RGBA")  # the 1400x1050 calibration frame
         if desaturate:  # grayscale the blue artwork → a black-and-white map, then
             # contrast 150% + brightness 70% (darker) for a crisp, muted base.
@@ -419,7 +427,7 @@ def render(
     # Logo first — its box becomes an obstacle so no label hides behind it.
     obstacles = []
     if logo:
-        b = _draw_logo(canvas, th, logo_path, bar_height, logo_color)
+        b = _draw_logo(canvas, th, logo_path, bar_height, logo_color, logo_invert)
         if b:
             obstacles.append(b)
 

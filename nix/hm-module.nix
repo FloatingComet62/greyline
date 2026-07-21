@@ -1,7 +1,7 @@
 # Home-manager module: declaratively configure + schedule the wallpaper.
 #
 # Import via the flake's homeManagerModules.default, then:
-#   services.thinkpad-wallpaper = {
+#   services.greyline = {
 #     enable = true;
 #     settings.city = [ { name = "Kuala Lumpur"; lat = 3.14; lon = 101.69; tz = "Asia/Kuala_Lumpur"; } ... ];
 #   };
@@ -13,7 +13,7 @@ self:
   ...
 }:
 let
-  cfg = config.services.thinkpad-wallpaper;
+  cfg = config.services.greyline;
   tomlFormat = pkgs.formats.toml { };
   useSwww = cfg.backend == "swww";
   # The daemon binary is "<mainProgram>-daemon" — works whether the package ships
@@ -21,13 +21,13 @@ let
   swwwDaemon = "${lib.getExe cfg.swwwPackage}-daemon";
 in
 {
-  options.services.thinkpad-wallpaper = {
-    enable = lib.mkEnableOption "the live ThinkPad World Time wallpaper";
+  options.services.greyline = {
+    enable = lib.mkEnableOption "the greyline live world-time wallpaper";
 
     package = lib.mkOption {
       type = lib.types.package;
       default = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      defaultText = lib.literalExpression "thinkpad-world-wallpaper-revived";
+      defaultText = lib.literalExpression "greyline";
       description = "The wallpaper renderer package.";
     };
 
@@ -83,13 +83,13 @@ in
       type = tomlFormat.type;
       default = { };
       description = ''
-        Written to ~/.config/thinkpad-wallpaper/config.toml. When empty, the package's
-        bundled defaults (10 world cities, faithful blue theme) are used. Provide a
+        Written to ~/.config/greyline/config.toml. When empty, the package's
+        bundled defaults (10 world cities, dark vector theme) are used. Provide a
         `city` list to choose your own cities and a `home.tz` to pick the accented one.
       '';
       example = lib.literalExpression ''
         {
-          theme = "thinkpad-blue";
+          theme = "dark";
           format = "24h";
           twilight = { bands = true; darkness = "subtle"; };
           home = { tz = "auto"; column_highlight = true; };
@@ -107,14 +107,13 @@ in
     home.packages = [ cfg.package ];
 
     xdg.configFile = lib.mkIf (cfg.settings != { }) {
-      "thinkpad-wallpaper/config.toml".source =
-        tomlFormat.generate "thinkpad-wallpaper-config.toml" cfg.settings;
+      "greyline/config.toml".source = tomlFormat.generate "greyline-config.toml" cfg.settings;
     };
 
     # swww wallpaper daemon — buffered, flash-free swaps; survives `swaymsg reload`.
     systemd.user.services.swww-daemon = lib.mkIf useSwww {
       Unit = {
-        Description = "swww wallpaper daemon (backend for thinkpad-wallpaper)";
+        Description = "swww wallpaper daemon (backend for greyline)";
         After = [ cfg.target ];
         PartOf = [ cfg.target ];
       };
@@ -127,9 +126,9 @@ in
     };
 
     # Oneshot renderer: runs once at session start and on each timer tick, then exits.
-    systemd.user.services.thinkpad-wallpaper = {
+    systemd.user.services.greyline = {
       Unit = {
-        Description = "Render the ThinkPad World Time wallpaper";
+        Description = "Render the greyline world-time wallpaper";
         After = [ cfg.target ] ++ lib.optional useSwww "swww-daemon.service";
         Wants = lib.optional useSwww "swww-daemon.service";
         PartOf = [ cfg.target ];
@@ -139,13 +138,13 @@ in
         Environment = [
           "PATH=${lib.makeBinPath (cfg.extraPackages ++ [ pkgs.fontconfig ])}:/run/current-system/sw/bin"
         ];
-        ExecStart = ''${cfg.package}/bin/thinkpad-wallpaper --backend ${cfg.backend} --font-family "${cfg.fontFamily}"'';
+        ExecStart = ''${cfg.package}/bin/greyline --backend ${cfg.backend} --font-family "${cfg.fontFamily}"'';
       };
       Install.WantedBy = [ cfg.target ];
     };
 
-    systemd.user.timers.thinkpad-wallpaper = {
-      Unit.Description = "Update the ThinkPad World Time wallpaper on a schedule";
+    systemd.user.timers.greyline = {
+      Unit.Description = "Update the greyline world-time wallpaper on a schedule";
       Timer = {
         OnCalendar = cfg.interval;
         Persistent = true;

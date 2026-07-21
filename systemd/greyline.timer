@@ -1,5 +1,5 @@
 [Unit]
-Description=Update the ThinkPad World Time wallpaper on a schedule
+Description=Update the greyline world-time wallpaper on a schedule
 
 [Timer]
 OnCalendar=*:*:00

@@ -1,55 +1,59 @@
-# thinkpad_world_wallpaper_revived
+# greyline
 
-A modern, **live** recreation of the classic IBM/ThinkPad **"World Time"** Active
-Desktop wallpaper: a world map with **clocks for many cities**, your **home city**
-highlighted, and a **day/night terminator** with twilight bands that tracks the sun.
+A live world-time desktop wallpaper for Wayland/X11 — a world map with clocks for
+your cities, your home city highlighted, and a day/night terminator that tracks the
+sun. A modern recreation of the classic IBM/ThinkPad **"World Time"** Active Desktop.
 
-It does *not* run a browser or any resident process. A tiny Python program renders a
-PNG once a minute and hands it to your existing wallpaper mechanism — so it is
+*(greyline = the ham-radio term for the day/night terminator.)*
+
+![greyline — dark theme](docs/screenshots/hero.png)
+
+It doesn't run a browser or a background daemon. A small Python program renders a PNG
+once a minute and hands it to your existing wallpaper mechanism, then exits — so it's
 effectively free on battery.
 
 ```
-systemd timer (*:*:00) ─▶ thinkpad-wallpaper (≈100 ms, then exits)
+systemd timer (*:*:00) ─▶ greyline (≈100 ms, then exits)
       render per output (Pillow): map + clocks + terminator
       └─▶ set wallpaper via the detected backend (sway/swww/hyprpaper/feh)
 ```
 
 ## Features
 
-- **Multi-timezone clocks** placed at each city's real location; **accurate DST**
-  worldwide via the OS IANA database (`zoneinfo`).
-- **Home city** styled for contrast (accent dot + bold label + optional timezone-column
-  highlight); auto-detected from the system timezone or pinned in config.
-- **Analytic day/night terminator** — seasonally correct — with discrete **civil /
-  nautical / astronomical twilight bands** (subtle by default, tunable).
+- **Multi-timezone clocks** at each city's real location, with **accurate DST** via the
+  OS IANA database (`zoneinfo`). 12h or 24h.
+- **Home city** accented (dot + bold label + optional timezone-column highlight),
+  auto-detected from your system timezone or pinned in config.
+- **Analytic day/night terminator**, seasonally correct, with discrete civil / nautical /
+  astronomical **twilight bands**.
+- **Vector map** drawn from public-domain **Natural Earth** data — crisp at any
+  resolution, fully themeable (`dark`, `blue`, or custom), with honest zig-zag timezone
+  boundaries, a green GMT column, and a red International Date Line.
 - **Any resolution / multi-monitor / HiDPI** — each output rendered at native pixels.
-- **Two map styles** — `raster` (the nostalgic ThinkPad artwork) or `vector` (drawn from
-  public-domain **Natural Earth** data, crisp at any resolution, fully themeable; with
-  honest zig-zag timezone boundaries, a green GMT column, and a red International Date
-  Line, framed to match the raster).
-- **Theming** — `thinkpad-blue` and a sleek `dark` preset, plus custom.
-- **Smart label placement** — labels auto-pick a side (right/left/above/below) to avoid
-  overlapping each other, the dots, the logo, and the screen edges.
-- Optional **ThinkPad wordmark** (bottom-left), toggleable via `logo`.
+- **Swappable corner logo** — ships with Tux; point `logo_path` at your own PNG.
 - **Pluggable backends**, auto-detected: `sway`, `swww`, `hyprpaper`, `x11` (feh/xwallpaper).
+
+| `blue` theme + Tux | minimal (no logo, 12h) |
+|---|---|
+| ![blue theme](docs/screenshots/blue.png) | ![minimal](docs/screenshots/minimal.png) |
 
 ## Install
 
 ### Nix (flake + home-manager) — recommended
 
 ```nix
-# flake.nix inputs (private repo — needs a GitHub token / SSH access):
-inputs.thinkpad-wallpaper.url = "github:cothinking-dev/thinkpad_world_wallpaper_revived";
+# flake.nix
+inputs.greyline.url = "github:cothinking-dev/greyline";
 
-# home-manager:
-imports = [ inputs.thinkpad-wallpaper.homeManagerModules.default ];
+# home-manager
+imports = [ inputs.greyline.homeManagerModules.default ];
 
-services.thinkpad-wallpaper = {
+services.greyline = {
   enable = true;
-  backend = "sway";              # or "auto"
+  backend = "sway";              # or "auto" / "swww" / "hyprpaper" / "x11"
   fontFamily = "Aporetic Sans";  # resolved via fontconfig
   settings = {
-    theme = "thinkpad-blue";
+    theme = "dark";
     format = "24h";
     twilight = { bands = true; darkness = "subtle"; };
     home = { tz = "auto"; column_highlight = true; };  # "auto" = system tz
@@ -63,52 +67,57 @@ services.thinkpad-wallpaper = {
 };
 ```
 
-Try it without installing: `nix run github:cothinking-dev/thinkpad_world_wallpaper_revived -- --list-outputs`
+Try it without installing:
+
+```sh
+nix run github:cothinking-dev/greyline -- --out wt.png --res 2560x1440   # writes a PNG
+```
 
 ### pipx (other distros)
 
 ```sh
-pipx install thinkpad-world-wallpaper-revived      # dep: Pillow only
-mkdir -p ~/.config/thinkpad-wallpaper
-# edit ~/.config/thinkpad-wallpaper/config.toml (see worldtime/default-config.toml)
-systemctl --user enable --now thinkpad-wallpaper.timer   # see systemd/ units
+pipx install git+https://github.com/cothinking-dev/greyline   # dep: Pillow only
+mkdir -p ~/.config/greyline
+# edit ~/.config/greyline/config.toml (copy worldtime/default-config.toml)
+systemctl --user enable --now greyline.timer                  # units in systemd/
 ```
 
 ## Configuration
 
-Non-Nix users edit `~/.config/thinkpad-wallpaper/config.toml`; the shipped
-`worldtime/default-config.toml` is the documented template. Keys: `backend`, `theme`,
-`format` (`24h`/`12h`), `[twilight] bands/darkness`,
-`[home] tz/column_highlight`, and a `[[city]]` list (`name`, `lat`, `lon`, `tz`).
+Non-Nix users edit `~/.config/greyline/config.toml`; the shipped
+[`worldtime/default-config.toml`](worldtime/default-config.toml) is the documented
+template. Keys: `backend`, `map_style` (`vector`/`raster`), `theme` (`dark`/`blue`),
+`format` (`24h`/`12h`), `logo` / `logo_path` / `logo_invert`, `[twilight] bands/darkness`,
+`[home] tz/column_highlight/color`, and a `[[city]]` list (`name`, `lat`, `lon`, `tz`,
+optional `label_side`).
 
 ## CLI
 
 ```
-thinkpad-wallpaper                 # render all outputs and apply (what the timer runs)
-thinkpad-wallpaper --list-outputs  # show detected backend + outputs
-thinkpad-wallpaper --out wt.png --res 1920x1200   # render a PNG, no backend
-thinkpad-wallpaper --backend swww  # force a backend
+greyline                 # render all outputs and apply (what the timer runs)
+greyline --list-outputs  # show detected backend + outputs
+greyline --out wt.png --res 1920x1200   # render a PNG, no backend needed
+greyline --backend swww  # force a backend
 ```
 
 ## How it works
 
-- `geo.py` — lon/lat → pixel affine, least-squares calibrated (`reference/calibrate.py`)
-  from the original wallpaper's city offsets (the map is equirectangular).
+- `geo.py` / `vectormap.py` — lon/lat → pixel projection; the vector map is drawn from
+  Natural Earth GeoJSON (supersampled for smooth coastlines).
 - `sun.py` — subsolar point + terminator/twilight boundary latitudes.
-- `render.py` — composites the overlays in the map's 1400×1050 frame, cover-crops to the
-  output (keeping the hour labels), then draws clocks at native resolution.
+- `render.py` — composites map + overlays, then draws clocks at native resolution with
+  smart label placement (labels pick a side to avoid overlapping each other and the edges).
 - `backends/` — the only platform-specific code; everything else is portable.
 
-## Roadmap
+## Licensing & credits
 
-- **Done — vector map (Phase B):** `map_style = "vector"` draws the world from
-  public-domain Natural Earth data (no IBM/Lenovo artwork), crisp at any resolution,
-  with `thinkpad-blue` / `dark` / custom themes. It is the cleanly-licensed alternative
-  to the default `raster` map for redistribution (see `NOTICE`).
-- Windows / macOS backends.
+Code is **GPL-2.0-or-later**. It descends from Maxim Proskurnya's GPL "World Time
+Wallpaper" tribute; the concept and original artwork are © IBM/Lenovo.
 
-## Credits & license
+The default **vector** map uses public-domain **Natural Earth** data, and the default
+logo is **Tux** (Larry Ewing / GIMP) — both cleanly redistributable. The original
+IBM/Lenovo ThinkPad raster art and wordmark are **not** bundled; `map_style = "raster"`
+and the ThinkPad logo require you to supply those files yourself (see
+[`NOTICE`](NOTICE) and [`docs/CREDITS.md`](docs/CREDITS.md)).
 
-GPL-2.0-or-later. Descends from Maxim Proskurnya's GPL "World Time Wallpaper" tribute;
-original concept/artwork © IBM/Lenovo. **The bundled raster map is IBM/Lenovo artwork —
-see `NOTICE` before publishing this repo.**
+> Built with the assistance of AI coding tools.
