@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question / discussion
+    url: https://github.com/cothinking-dev/greyline/discussions
+    about: Usage questions and general discussion (if Discussions is enabled).

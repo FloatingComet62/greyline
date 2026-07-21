@@ -42,7 +42,13 @@ def main(argv=None):
     p.add_argument("--version", action="version",
                    version=f"%(prog)s {__version__}")
     p.add_argument("--config", help="path to config.toml (default: XDG location)")
-    p.add_argument("--backend", help="override backend: sway|swww|hyprpaper|x11")
+    p.add_argument("--backend",
+                   help="override backend: sway|swww|hyprpaper|x11|command")
+    p.add_argument("--command",
+                   help="for --backend command: shell command run per output with "
+                        "{path} (and {output}) substituted, e.g. "
+                        "'gsettings set org.gnome.desktop.background picture-uri "
+                        "\"file://{path}\"'")
     p.add_argument("--out", help="write a single PNG here instead of applying")
     p.add_argument("--res", help="force resolution WxH (for --out)")
     p.add_argument("--font-family", default="Aporetic Sans",
@@ -68,6 +74,18 @@ def main(argv=None):
         return 0
 
     backend_name = args.backend or cfg.get("backend", "auto")
+    if backend_name == "command":
+        # The command backend reads its template + size from the environment
+        # (keeps the backend contract's apply(name, path) signature unchanged).
+        command = args.command or cfg.get("command")
+        if not command:
+            print("backend 'command' requires a command "
+                  "(set `command` in config or pass --command)", file=sys.stderr)
+            return 1
+        os.environ["GREYLINE_COMMAND"] = command
+        resolution = args.res or cfg.get("resolution")
+        if resolution:
+            os.environ["GREYLINE_RESOLUTION"] = resolution
     try:
         name, mod = backends.resolve(backend_name)
     except RuntimeError as e:  # no compositor/backend detected — report cleanly, no traceback

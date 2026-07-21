@@ -1,0 +1,38 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Config / command used
+        2. Ran `greyline …`
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: backend
+    attributes:
+      label: Backend
+      placeholder: "auto / sway / swww / hyprpaper / x11 / command"
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS/distro, `greyline --version`, Python version, compositor/desktop.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error output / logs
+      render: shell

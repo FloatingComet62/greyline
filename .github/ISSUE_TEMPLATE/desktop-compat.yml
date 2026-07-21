@@ -1,0 +1,67 @@
+name: Desktop-environment compatibility report
+description: Report whether greyline's `command` backend works (or how to fix a recipe) on GNOME, KDE, XFCE, or another desktop.
+title: "[desktop] <your DE>: "
+labels: ["desktop-compat"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        greyline's maintainers run sway/Wayland and can't test GNOME/KDE/XFCE directly,
+        so these reports are how the `command`-backend recipes get verified and fixed.
+        Thank you for helping!
+  - type: input
+    id: desktop
+    attributes:
+      label: Desktop environment + version
+      placeholder: "GNOME 46 / KDE Plasma 6.1 / XFCE 4.18 / …"
+    validations:
+      required: true
+  - type: dropdown
+    id: session
+    attributes:
+      label: Session type ($XDG_SESSION_TYPE)
+      options: ["wayland", "x11", "not sure"]
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: The `command` you used
+      description: The exact `command = "..."` from your config (or the --command value).
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: What happened?
+      options:
+        - "Works perfectly"
+        - "Works, but with a caveat (describe below)"
+        - "Wallpaper does not change / reverts"
+        - "Error / crash"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details — expected vs actual, and any error output
+    validations:
+      required: true
+  - type: textarea
+    id: tool-version
+    attributes:
+      label: Wallpaper tool + version
+      description: "e.g. `gsettings --version`, `plasma-apply-wallpaperimage --help`, `xfconf-query --version`"
+      render: shell
+  - type: textarea
+    id: outputs
+    attributes:
+      label: Output of `greyline --list-outputs`
+      render: shell
+  - type: input
+    id: greyline-version
+    attributes:
+      label: greyline version (`greyline --version`)
+    validations:
+      required: true
