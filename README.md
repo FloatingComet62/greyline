@@ -76,12 +76,13 @@ Try it without installing:
 
 ```sh
 nix run github:cothinking-dev/greyline -- --out wt.png --res 2560x1440   # writes a PNG
+uvx greyline --out wt.png --res 2560x1440                                # same, via PyPI
 ```
 
-### pipx (other distros)
+### pipx / uv (other distros)
 
 ```sh
-pipx install git+https://github.com/cothinking-dev/greyline   # dep: Pillow only
+pipx install greyline    # or: uv tool install greyline   — dep: Pillow only
 mkdir -p ~/.config/greyline
 # edit ~/.config/greyline/config.toml (copy worldtime/default-config.toml)
 
