@@ -44,9 +44,26 @@ in
         "swww"
         "hyprpaper"
         "x11"
+        "command"
       ];
       default = "auto";
-      description = "Display backend used to set the wallpaper.";
+      description = ''
+        Display backend used to set the wallpaper. Use "command" on GNOME/KDE/XFCE
+        (or any desktop with a CLI wallpaper-setter) together with `command`, and
+        set `target`/`extraPackages` for your session (e.g. graphical-session.target
+        and the pkg providing gsettings / plasma-apply-wallpaperimage / xfconf-query).
+      '';
+    };
+
+    command = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      example = ''gsettings set org.gnome.desktop.background picture-uri "file://{path}"'';
+      description = ''
+        Shell command for backend = "command". Run once per output with {path}
+        (the rendered PNG) and {output} (the output name) substituted. Replaces the
+        desktop wallpaper; it is not an overlay.
+      '';
     };
 
     fontFamily = lib.mkOption {
@@ -138,7 +155,8 @@ in
         Environment = [
           "PATH=${lib.makeBinPath (cfg.extraPackages ++ [ pkgs.fontconfig ])}:/run/current-system/sw/bin"
         ];
-        ExecStart = ''${cfg.package}/bin/greyline --backend ${cfg.backend} --font-family "${cfg.fontFamily}"'';
+        ExecStart = ''${cfg.package}/bin/greyline --backend ${cfg.backend} --font-family "${cfg.fontFamily}"''
+          + lib.optionalString (cfg.command != "") '' --command ${lib.escapeShellArg cfg.command}'';
       };
       Install.WantedBy = [ cfg.target ];
     };

@@ -36,7 +36,8 @@ systemd timer (*:*:00) ─▶ greyline (renders in well under a second, then exi
   boundaries, a green GMT column, and a red International Date Line.
 - **Any resolution / multi-monitor / HiDPI** — each output rendered at native pixels.
 - **Swappable corner logo** — ships with Tux; point `logo_path` at your own PNG.
-- **Pluggable backends**, auto-detected: `sway`, `swww`, `hyprpaper`, `x11` (feh/xwallpaper).
+- **Pluggable backends**, auto-detected: `sway`, `swww`, `hyprpaper`, `x11` (feh/xwallpaper),
+  plus a generic `command` backend for **GNOME / KDE / XFCE** and anything else.
 
 | `blue` theme + Tux | minimal (no logo, 12h) |
 |---|---|
@@ -92,6 +93,40 @@ install -Dm644 greyline/systemd/greyline.{service,timer} -t ~/.config/systemd/us
 systemctl --user daemon-reload
 systemctl --user enable --now greyline.timer
 ```
+
+### Desktop environments (GNOME / KDE / XFCE / other)
+
+greyline has native backends for wlroots compositors (sway/Hyprland/…) and X11 (feh). On
+desktops that manage their own wallpaper — **GNOME, KDE Plasma, XFCE** — use the generic
+`command` backend: greyline renders a PNG and runs *your* command to set it, with `{path}`
+(the PNG) and `{output}` (the output name) substituted.
+
+> **Note:** this **replaces** your desktop wallpaper — it is not an overlay on top of it.
+> greyline re-renders and re-sets it each minute; the last image stays after greyline stops.
+
+In `~/.config/greyline/config.toml`:
+
+```toml
+backend = "command"
+# resolution = "2560x1440"   # optional; else largest xrandr output, else 1920x1080
+
+# --- pick the line for your desktop ---
+# GNOME (the empty-then-set toggle defeats GNOME's same-URI cache; sets light + dark):
+command = 'gsettings set org.gnome.desktop.background picture-uri "" && gsettings set org.gnome.desktop.background picture-uri "file://{path}" && gsettings set org.gnome.desktop.background picture-uri-dark "file://{path}"'
+# KDE Plasma:
+command = 'plasma-apply-wallpaperimage {path}'
+# XFCE (the monitor segment varies — find yours with: xfconf-query -c xfce4-desktop -l | grep last-image):
+command = 'xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s {path}'
+```
+
+Then wire up the systemd timer as in the pipx section above (or `services.greyline.command`
+in the Nix module). Test once with `greyline --backend command --command '…'` before enabling
+the timer.
+
+> These recipes are **best-effort and community-verified** — the maintainers run sway and
+> can't test them directly. If one doesn't work (or needs a tweak) on your desktop, please
+> [open a desktop-compatibility report](https://github.com/cothinking-dev/greyline/issues/new?template=desktop-compat.yml)
+> — that's how they get fixed.
 
 ## Configuration
 

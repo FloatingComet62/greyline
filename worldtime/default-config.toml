@@ -2,7 +2,16 @@
 # User config at ~/.config/greyline/config.toml is merged over this
 # (top-level keys override; a user [[city]] list replaces this one entirely).
 
-backend = "auto"            # auto | sway | swww | hyprpaper | x11 (feh/xwallpaper)
+backend = "auto"            # auto | sway | swww | hyprpaper | x11 (feh/xwallpaper) | command
+
+# GNOME / KDE / XFCE and other desktops: use backend = "command" and give a shell
+# command that sets the wallpaper to the PNG greyline renders. {path} is the PNG,
+# {output} the output name. This REPLACES the wallpaper (it is not an overlay).
+# See the README "Desktop environments" recipes. Examples:
+#   command = 'gsettings set org.gnome.desktop.background picture-uri "" && gsettings set org.gnome.desktop.background picture-uri "file://{path}" && gsettings set org.gnome.desktop.background picture-uri-dark "file://{path}"'  # GNOME
+#   command = 'plasma-apply-wallpaperimage {path}'                                                                        # KDE Plasma
+#   command = 'xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s {path}'               # XFCE
+# resolution = "2560x1440"   # optional; size of the single rendered image (else largest xrandr output, else 1920x1080)
 map_style = "vector"        # vector (scalable, themeable) | raster (needs your own map art, see NOTICE)
 theme = "dark"              # dark | blue
 format = "24h"              # 24h | 12h
