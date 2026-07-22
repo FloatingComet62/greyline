@@ -25,6 +25,10 @@ _ENUMS = {
     "twilight.darkness": {"subtle", "medium", "dramatic"},
 }
 
+# Hex-colour keys — kept as strings (never numerically coerced, so "990000" stays a
+# colour, not the int 990000) and validated as #rrggbb / #rgb.
+_COLOR_KEYS = {"home.color", "logo_color"}
+
 
 def ensure_config(path=None):
     """Return the user config path, creating it from the packaged default if absent."""
@@ -70,6 +74,17 @@ def _coerce(value):
     return value
 
 
+def _is_hex_color(value):
+    s = value.lstrip("#") if isinstance(value, str) else ""
+    if len(s) not in (3, 6):
+        return False
+    try:
+        int(s, 16)
+        return True
+    except ValueError:
+        return False
+
+
 def _validate(dotted, value):
     if dotted in _ENUMS and value not in _ENUMS[dotted]:
         allowed = ", ".join(sorted(_ENUMS[dotted]))
@@ -79,13 +94,16 @@ def _validate(dotted, value):
             ZoneInfo(value)
         except (ZoneInfoNotFoundError, ValueError):
             raise ValueError(f"home.tz: {value!r} is not a valid IANA timezone")
+    if dotted in _COLOR_KEYS and not _is_hex_color(value):
+        raise ValueError(f"{dotted}: {value!r} is not a hex colour (e.g. #e64553)")
 
 
 # --- public operations (each loads, mutates, saves) ---
 
 def set_key(path, dotted, raw_value):
     """Set a (possibly nested) dotted key, e.g. 'twilight.darkness' -> 'medium'."""
-    value = _coerce(raw_value)
+    # Colour keys stay strings — "990000" is a hex colour, not the integer 990000.
+    value = raw_value if dotted in _COLOR_KEYS else _coerce(raw_value)
     _validate(dotted, value)
     doc = _load(path)
     parts = dotted.split(".")
@@ -105,14 +123,14 @@ def unset_key(path, dotted):
     parts = dotted.split(".")
     node = doc
     for p in parts[:-1]:
-        if p not in node:
+        if not isinstance(node, (dict, tomlkit.items.Table)) or p not in node:
             return False
         node = node[p]
-    if parts[-1] in node:
-        del node[parts[-1]]
-        _save(path, doc)
-        return True
-    return False
+    if not isinstance(node, (dict, tomlkit.items.Table)) or parts[-1] not in node:
+        return False
+    del node[parts[-1]]
+    _save(path, doc)
+    return True
 
 
 def get_key(path, dotted):

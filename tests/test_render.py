@@ -27,6 +27,16 @@ def test_unknown_theme_falls_back():
     assert img.size == (320, 200)
 
 
+def test_hex_parsing_and_bad_values():
+    assert render._hex("#e64553") == (230, 69, 83)
+    assert render._hex("990000") == (153, 0, 0)  # no leading '#'
+    assert render._hex("#fff") == (255, 255, 255)  # #rgb shorthand
+    assert render._hex("000000") == (0, 0, 0)  # black is a real colour, not "unset"
+    # Unparseable values return None (theme default) instead of raising.
+    for bad in (None, 990000, "", "#ggg", "#12345", "notacolor"):
+        assert render._hex(bad) is None
+
+
 def test_logo_scale_shrinks_the_logo():
     from PIL import Image
     th = render.THEMES["dark"]

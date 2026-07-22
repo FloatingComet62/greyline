@@ -80,11 +80,22 @@ FONT_BOLD_CANDIDATES = [
 
 
 def _hex(s):
-    """Parse '#rrggbb' (or 'rrggbb') to an (r, g, b) tuple; None passes through."""
-    if not s:
+    """Parse '#rrggbb' / 'rrggbb' / '#rgb' shorthand to an (r, g, b) tuple.
+
+    Returns None for anything unparseable (empty, non-string, bad length/digits) so a
+    stray config value falls back to the theme default instead of crashing the render.
+    """
+    if not isinstance(s, str):
         return None
-    s = s.lstrip("#")
-    return tuple(int(s[i:i + 2], 16) for i in (0, 2, 4))
+    s = s.strip().lstrip("#")
+    if len(s) == 3:  # #rgb shorthand -> #rrggbb
+        s = "".join(c * 2 for c in s)
+    if len(s) != 6:
+        return None
+    try:
+        return tuple(int(s[i:i + 2], 16) for i in (0, 2, 4))
+    except ValueError:
+        return None
 
 
 def _load_font(size, candidates, explicit=None):

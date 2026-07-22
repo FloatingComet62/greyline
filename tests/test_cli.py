@@ -1,8 +1,24 @@
 """CLI plumbing: DE recipe detection, systemd unit generation, init, watch loop."""
 import shutil
 
+import pytest
+
 from worldtime import __main__ as cli
 from worldtime import config, recipes, service
+
+
+# --- argument parsing ---
+
+def test_parse_res_valid():
+    assert cli._parse_res("2560x1440") == (2560, 1440)
+    assert cli._parse_res("1920X1080") == (1920, 1080)  # case-insensitive
+
+
+def test_parse_res_malformed_exits_cleanly():
+    # Regression: a bad --res must give a clean SystemExit, not a raw ValueError traceback.
+    for bad in ("1920", "1920xABC", "1920x1080x2"):
+        with pytest.raises(SystemExit):
+            cli._parse_res(bad)
 
 
 # --- recipes ---

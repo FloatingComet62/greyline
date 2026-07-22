@@ -34,8 +34,11 @@ def _runtime_dir():
 
 
 def _parse_res(s):
-    w, h = s.lower().split("x")
-    return int(w), int(h)
+    try:
+        w, h = s.lower().split("x")
+        return int(w), int(h)
+    except ValueError:
+        raise SystemExit(f"invalid --res {s!r}; expected WxH, e.g. 2560x1440")
 
 
 def run_apply(args):

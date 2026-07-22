@@ -56,6 +56,27 @@ def test_unset_key_reverts_to_default(cfg):
     assert configedit.unset_key(cfg, "theme") is False  # already gone
 
 
+def test_unset_key_descending_into_scalar_is_safe(cfg):
+    # Regression: unset must not crash when a dotted path runs into a non-table value
+    # (e.g. `logo` is a bool, so `logo.foo` has nowhere to descend).
+    configedit.set_key(cfg, "logo", "true")
+    assert configedit.unset_key(cfg, "logo.foo") is False
+
+
+def test_set_color_key_stays_a_hex_string(cfg):
+    # Regression: an all-digit hex like 990000 must not be coerced to the int 990000
+    # (which then crashes rendering); it stays the string "990000".
+    configedit.set_key(cfg, "home.color", "990000")
+    assert config.load(cfg)["home"]["color"] == "990000"
+    configedit.set_key(cfg, "home.color", "#000000")  # black must round-trip too
+    assert config.load(cfg)["home"]["color"] == "#000000"
+
+
+def test_set_color_key_rejects_non_color(cfg):
+    with pytest.raises(ValueError):
+        configedit.set_key(cfg, "home.color", "chartreuse")
+
+
 def test_add_and_remove_city(cfg):
     n0 = len(configedit.list_cities(cfg))
     configedit.add_city(cfg, "Testville", 1.5, 2.5, "Asia/Kuala_Lumpur",
