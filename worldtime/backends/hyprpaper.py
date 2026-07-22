@@ -36,8 +36,14 @@ def apply(name, png_path):
     # subprocess.run(["hyprctl", "hyprpaper", "preload", png_path],
     #                capture_output=True, text=True, check=True)
     
-    subprocess.run(["hyprctl", "hyprpaper", "wallpaper", f"{name},{png_path},cover"],
-                   capture_output=True, text=True, check=True)
+    # subprocess.run(["hyprctl", "hyprpaper", "wallpaper", f"{name},{png_path},cover"],
+    #                capture_output=True, text=True, check=True)
+    subprocess.run(
+        ["hyprctl", "hyprpaper", "reload", f"{name},{png_path},cover"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
 
     # subprocess.run(["hyprctl", "hyprpaper", "unload", "unused"],
     #                capture_output=True, text=True)
