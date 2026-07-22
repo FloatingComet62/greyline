@@ -20,6 +20,7 @@ on battery. *(greyline = the ham-radio term for the day/night terminator.)*
 ## Table of Contents
 
 - [Features](#features)
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Configuration](#configuration)
@@ -48,6 +49,34 @@ on battery. *(greyline = the ham-radio term for the day/night terminator.)*
 | `blue` theme + Tux | minimal (no logo, 12h) |
 |---|---|
 | ![blue theme](docs/screenshots/blue.png) | ![minimal](docs/screenshots/minimal.png) |
+
+## Requirements
+
+- **OS:** Linux — **Wayland or X11**. (Not macOS or Windows; greyline drives a Linux desktop's
+  wallpaper mechanism, it doesn't own the screen.) Architectures: `x86_64` and `aarch64`.
+- **Python ≥ 3.11** — only when installing via pip/pipx/uv (the Nix package bundles its own).
+- **Runtime dependencies:** [Pillow](https://python-pillow.org/) and
+  [tomlkit](https://github.com/sdispater/tomlkit), installed automatically; plus **fontconfig**
+  (`fc-match`) for font resolution.
+- **A wallpaper mechanism for your desktop** — one of the tools in the table below.
+- **Scheduling:** a **systemd** user timer (most distros) *or* any session autostart running
+  `greyline watch` (Runit/OpenRC/s6/… — no systemd required).
+
+greyline is **distro-agnostic** — install it with pipx/uv on any distribution, or via the Nix
+flake on NixOS. Supported desktops and what each needs:
+
+| Desktop / compositor | Backend | Needs |
+|---|---|---|
+| **sway** / SwayFX | `sway` | `swaymsg` |
+| **Hyprland**, river, Wayfire, other wlroots | `swww` or `hyprpaper` | `swww` / `hyprpaper` daemon |
+| **X11** window managers | `x11` | `feh` or `xwallpaper` |
+| **GNOME** | `command` | `gsettings` |
+| **KDE Plasma** | `command` | `plasma-apply-wallpaperimage` |
+| **XFCE** | `command` | `xfconf-query` |
+| anything else with a CLI wallpaper-setter | `command` | your own command |
+
+`greyline init` detects your desktop and picks the backend for you; the `command`-backend rows
+are **community-verified** (see [Contributing](#contributing)).
 
 ## Installation
 
