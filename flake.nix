@@ -17,11 +17,14 @@
         pkgs:
         pkgs.python3Packages.buildPythonApplication {
           pname = "greyline";
-          version = "0.2.0";
+          version = "0.3.0";
           pyproject = true;
           src = ./.;
           build-system = [ pkgs.python3Packages.setuptools ];
-          dependencies = [ pkgs.python3Packages.pillow ];
+          dependencies = [
+            pkgs.python3Packages.pillow
+            pkgs.python3Packages.tomlkit
+          ];
           # fc-match (font resolution) is always needed; the compositor IPC tools
           # (swaymsg/swww/hyprctl/feh) come from the session PATH or the HM module.
           nativeBuildInputs = [ pkgs.makeWrapper ];
@@ -61,7 +64,7 @@
         {
           default = pkgs.mkShell {
             packages = [
-              (pkgs.python3.withPackages (ps: [ ps.pillow ]))
+              (pkgs.python3.withPackages (ps: [ ps.pillow ps.tomlkit ]))
               pkgs.fontconfig
             ];
           };

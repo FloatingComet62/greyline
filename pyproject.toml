@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "greyline"
-version = "0.2.0"
+version = "0.3.0"
 description = "A live, multi-timezone world-time desktop wallpaper for Wayland/X11."
 readme = "README.md"
 requires-python = ">=3.11"          # tomllib + zoneinfo (stdlib)
@@ -12,7 +12,7 @@ license = "GPL-2.0-or-later"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Jotham Lim Ee Chen" }]
 keywords = ["wallpaper", "wayland", "sway", "hyprland", "timezone", "terminator", "greyline"]
-dependencies = ["pillow>=9"]
+dependencies = ["pillow>=9", "tomlkit>=0.11"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
