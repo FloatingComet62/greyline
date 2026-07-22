@@ -5,21 +5,28 @@
 [![Live demo](https://img.shields.io/badge/live-demo-2ea44f)](https://cothinking-dev.github.io/greyline/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPLv2%2B-blue.svg)](LICENSE)
 
+> [!NOTE]
+> **Beta, but usable.** greyline works and I run it daily. It's still beta, so expect the
+> odd rough edge or config change before 1.0. It was built with heavy AI help, so I've kept
+> a close eye on it; in practice it's held up, and the battery impact is negligible: one
+> short (~1–5s) render once a minute, then the process exits. No daemon, no browser, no GPU.
+> See [How it works](#how-it-works).
+
 > A live world-time desktop wallpaper for Wayland/X11 — a world map with clocks for your
 > cities, your home city highlighted, and a day/night terminator that tracks the sun. A modern
 > recreation of the classic IBM/ThinkPad **"World Time"** Active Desktop.
 
 ![greyline — dark theme](docs/screenshots/hero.png)
 
-<sub>Shown with the optional ThinkPad wordmark (a user-supplied logo — see [Credits](#credits)).
+<sub>Shown with the optional ThinkPad wordmark (a user-supplied logo, see [Credits](#credits)).
 The bundled default logo is Tux.</sub>
 
-**▶ [Try the live demo](https://cothinking-dev.github.io/greyline/)** — greyline running in your
+**▶ [Try the live demo](https://cothinking-dev.github.io/greyline/):** greyline running in your
 browser (your timezone highlighted), no install needed.
 
 greyline doesn't run a browser or a background daemon. A small Python program renders a PNG once
-a minute and hands it to your existing wallpaper mechanism, then exits — so it's effectively free
-on battery. *(greyline = the ham-radio term for the day/night terminator.)*
+a minute and hands it to your existing wallpaper mechanism, then exits. On battery that's
+effectively free. *(greyline = the ham-radio term for the day/night terminator.)*
 
 ## Table of Contents
 
@@ -34,39 +41,39 @@ on battery. *(greyline = the ham-radio term for the day/night terminator.)*
 
 ## Features
 
-- **Multi-timezone clocks** at each city's real location, with **accurate DST** via the OS IANA
+- **Multi-timezone clocks** at each city's real location, with accurate DST via the OS IANA
   database (`zoneinfo`). 12h or 24h.
-- **Home city** accented (dot + bold label + optional timezone-column highlight), auto-detected
+- Home city accented (dot + bold label + optional timezone-column highlight), auto-detected
   from your system timezone or pinned in config.
-- **Analytic day/night terminator**, seasonally correct, with discrete civil / nautical /
-  astronomical **twilight bands**.
-- **Vector map** from public-domain **Natural Earth** data — crisp at any resolution, fully
+- Day/night terminator that's seasonally correct, with discrete civil / nautical / astronomical
+  twilight bands.
+- **Vector map** from public-domain Natural Earth data: crisp at any resolution, fully
   themeable (`dark`, `blue`, or custom), with honest zig-zag timezone boundaries, a green GMT
   column, and a red International Date Line.
-- **Any resolution / multi-monitor / HiDPI** — each output rendered at native pixels.
-- **Swappable corner logo** — ships with Tux; point `logo_path` at your own PNG.
-- **Works on any desktop** — native backends for `sway`, `swww`, `hyprpaper`, `x11`
-  (feh/xwallpaper), plus a generic `command` backend for **GNOME / KDE / XFCE** and anything else.
-- **One-command setup** — `greyline init` detects your desktop, writes a config, and schedules
+- Any resolution, multi-monitor, HiDPI. Each output rendered at native pixels.
+- **Swappable corner logo:** ships with Tux; point `logo_path` at your own PNG.
+- Works on any desktop, with native backends for `sway`, `swww`, `hyprpaper`, `x11`
+  (feh/xwallpaper), plus a generic `command` backend for GNOME / KDE / XFCE and anything else.
+- **One-command setup:** `greyline init` detects your desktop, writes a config, and schedules
   updates.
 
-| `blue` theme | home city accented | minimal — no logo, 12h |
+| `blue` theme | home city accented | minimal, no logo, 12h |
 |---|---|---|
 | ![blue theme](docs/screenshots/blue.png) | ![home city highlighted](docs/screenshots/home.png) | ![minimal, 12-hour](docs/screenshots/minimal.png) |
 
 ## Requirements
 
-- **OS:** Linux — **Wayland or X11**. (Not macOS or Windows; greyline drives a Linux desktop's
+- **OS:** Linux, **Wayland or X11**. (Not macOS or Windows; greyline drives a Linux desktop's
   wallpaper mechanism, it doesn't own the screen.) Architectures: `x86_64` and `aarch64`.
-- **Python ≥ 3.11** — only when installing via pip/pipx/uv (the Nix package bundles its own).
+- **Python ≥ 3.11**, only when installing via pip/pipx/uv (the Nix package bundles its own).
 - **Runtime dependencies:** [Pillow](https://python-pillow.org/) and
   [tomlkit](https://github.com/sdispater/tomlkit), installed automatically; plus **fontconfig**
   (`fc-match`) for font resolution.
-- **A wallpaper mechanism for your desktop** — one of the tools in the table below.
+- **A wallpaper mechanism for your desktop:** one of the tools in the table below.
 - **Scheduling:** a **systemd** user timer (most distros) *or* any session autostart running
   `greyline watch` (Runit/OpenRC/s6/… — no systemd required).
 
-greyline is **distro-agnostic** — install it with pipx/uv on any distribution, or via the Nix
+greyline is **distro-agnostic**: install it with pipx/uv on any distribution, or via the Nix
 flake on NixOS. Supported desktops and what each needs:
 
 | Desktop / compositor | Backend | Needs |
@@ -93,7 +100,7 @@ greyline init            # detect your desktop, write a config, schedule updates
 
 `greyline init` writes a starter `~/.config/greyline/config.toml`, auto-detects your
 compositor/desktop and picks the backend (on **GNOME / KDE / XFCE** it fills in the right
-wallpaper command for you), and — where systemd is present — installs and enables the
+wallpaper command for you), and (where systemd is present) installs and enables the
 once-a-minute user timer. No `git clone`, no hand-copied units.
 
 ### Nix (flake + home-manager) — recommended on NixOS
@@ -148,7 +155,7 @@ greyline --out wt.png --res WxH   # render a PNG, no backend needed
 ```
 
 **Scheduling.** On systemd, `greyline init`/`greyline enable` install a user timer that runs
-every minute. **No systemd?** Any init system or WM works — skip the timer and add greyline to
+every minute. **No systemd?** Any init system or WM works; skip the timer and add greyline to
 your session autostart:
 
 ```sh
@@ -185,7 +192,7 @@ On desktops that manage their own wallpaper, `greyline init` configures the gene
 backend automatically: greyline renders a PNG and runs a command to set it as your wallpaper,
 with `{path}` (the PNG) and `{output}` substituted.
 
-> **Note:** this **replaces** your desktop wallpaper — it is not an overlay. greyline re-renders
+> **Note:** this **replaces** your desktop wallpaper; it is not an overlay. greyline re-renders
 > and re-sets it each minute; the last image stays after greyline stops.
 
 To set the command by hand (`greyline config set command '…'`, or in the config file):
@@ -201,7 +208,7 @@ command = 'plasma-apply-wallpaperimage {path}'
 command = 'xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s {path}'
 ```
 
-These recipes are **best-effort / community-verified** — the maintainers run sway and can't test
+These recipes are **best-effort / community-verified**; the maintainers run sway and can't test
 them directly. If yours needs a tweak, please [report it](#contributing).
 
 ## How it works
@@ -232,11 +239,11 @@ flowchart LR
 ## Contributing
 
 greyline is a **personal passion project**, built and maintained in spare time and released as
-**free and open-source software** (GPL-2.0-or-later). It's a labour of love, not a product —
-issues, desktop-compatibility recipes, and pull requests are all welcome.
+**free and open-source software** (GPL-2.0-or-later). It's a labour of love, not a product.
+Issues, desktop-compatibility recipes, and pull requests are all welcome.
 
 - Found a bug, or a `command` recipe that needs tweaking on your desktop?
-  [Open an issue](https://github.com/cothinking-dev/greyline/issues/new/choose) — there's a
+  [Open an issue](https://github.com/cothinking-dev/greyline/issues/new/choose); there's a
   dedicated **desktop-compatibility report** template for GNOME/KDE/XFCE.
 - Run the tests with `nix flake check`, or `pytest` in the dev shell.
 
@@ -246,7 +253,7 @@ Code is **GPL-2.0-or-later**. It descends from Maxim Proskurnya's GPL "World Tim
 tribute; the concept and original artwork are © IBM/Lenovo.
 
 The default **vector** map uses public-domain **Natural Earth** data, and the default logo is
-**Tux** (Larry Ewing / GIMP) — both cleanly redistributable. The original IBM/Lenovo ThinkPad
+**Tux** (Larry Ewing / GIMP); both are cleanly redistributable. The original IBM/Lenovo ThinkPad
 raster art and wordmark are **not** bundled; `map_style = "raster"` and the ThinkPad logo require
 you to supply those files yourself (see [`NOTICE`](NOTICE) and [`docs/CREDITS.md`](docs/CREDITS.md)).
 
