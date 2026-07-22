@@ -1,0 +1,42 @@
+name: Deploy demo to GitHub Pages
+
+# Publishes the live browser demo in web/ to GitHub Pages. The Natural Earth GeoJSON
+# is copied from worldtime/geodata/ at build time (not duplicated in git).
+# One-time setup: repo Settings → Pages → Source = "GitHub Actions".
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "worldtime/geodata/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble site (web/ + geodata)
+        run: |
+          mkdir -p _site/data
+          cp web/*.html web/*.js _site/
+          cp worldtime/geodata/*.geojson _site/data/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
