@@ -6,11 +6,9 @@
 [![License: GPL v2+](https://img.shields.io/badge/License-GPLv2%2B-blue.svg)](LICENSE)
 
 > [!NOTE]
-> **Beta, but usable.** greyline works and I run it daily. It's still beta, so expect the
-> odd rough edge or config change before 1.0. It was built with heavy AI help, so I've kept
-> a close eye on it; in practice it's held up, and the battery impact is negligible: one
-> short (~1–5s) render once a minute, then the process exits. No daemon, no browser, no GPU.
-> See [How it works](#how-it-works).
+> **Greyline is in Beta.** It works and I run it daily on my linux machine, but expect bugs
+> or breaking changes before 1.0. It was built with AI help, but with heavy guardrails and
+>  adherence to performance, battery life and industry best practices. 
 
 > A live world-time desktop wallpaper for Wayland/X11 — a world map with clocks for your
 > cities, your home city highlighted, and a day/night terminator that tracks the sun. A modern
