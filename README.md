@@ -46,9 +46,9 @@ on battery. *(greyline = the ham-radio term for the day/night terminator.)*
 - **One-command setup** — `greyline init` detects your desktop, writes a config, and schedules
   updates.
 
-| `blue` theme + Tux | minimal (no logo, 12h) |
-|---|---|
-| ![blue theme](docs/screenshots/blue.png) | ![minimal](docs/screenshots/minimal.png) |
+| `blue` theme | home city accented | minimal — no logo, 12h |
+|---|---|---|
+| ![blue theme](docs/screenshots/blue.png) | ![home city highlighted](docs/screenshots/home.png) | ![minimal, 12-hour](docs/screenshots/minimal.png) |
 
 ## Requirements
 
