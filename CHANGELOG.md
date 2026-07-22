@@ -4,6 +4,14 @@ All notable changes to greyline are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Windows: timezone lookups no longer fail with `ZoneInfoNotFoundError`.** Windows has no
+  system IANA tz database, so stdlib `zoneinfo` couldn't resolve any timezone; greyline now
+  depends on the `tzdata` PyPI package on Windows (Unix is unaffected — it ships tzdata
+  system-wide). Caught by the new `windows-latest` CI matrix.
+
 ## [0.5.0] — 2026-07-22
 
 ### Added

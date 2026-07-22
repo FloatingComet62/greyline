@@ -12,7 +12,9 @@ license = "GPL-2.0-or-later"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Jotham Lim Ee Chen" }]
 keywords = ["wallpaper", "wayland", "sway", "hyprland", "timezone", "terminator", "greyline"]
-dependencies = ["pillow>=9", "tomlkit>=0.11"]
+# tzdata: Windows has no system IANA tz database, so stdlib zoneinfo needs the PyPI
+# package there. Unix (Linux/macOS) ships tzdata system-wide, so it's not pulled in.
+dependencies = ["pillow>=9", "tomlkit>=0.11", "tzdata; platform_system == 'Windows'"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
