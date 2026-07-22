@@ -80,70 +80,101 @@ nix run github:cothinking-dev/greyline -- --out wt.png --res 2560x1440   # write
 uvx greyline --out wt.png --res 2560x1440                                # same, via PyPI
 ```
 
-### pipx / uv (other distros)
+### pipx / uv (any distro, any desktop)
 
 ```sh
-pipx install greyline    # or: uv tool install greyline   — dep: Pillow only
-mkdir -p ~/.config/greyline
-# edit ~/.config/greyline/config.toml (copy worldtime/default-config.toml)
+pipx install greyline    # or: uv tool install greyline
+greyline init            # detect your desktop, write a config, schedule updates
+```
 
-# pip doesn't ship the systemd user units — grab them from the repo:
-git clone https://github.com/cothinking-dev/greyline
-install -Dm644 greyline/systemd/greyline.{service,timer} -t ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable --now greyline.timer
+`greyline init` does everything the old manual setup did: writes a starter
+`~/.config/greyline/config.toml`, auto-detects your compositor/desktop and picks the backend
+(on **GNOME / KDE / XFCE** it fills in the right `command` recipe for you), and — where systemd
+is present — installs and enables the once-a-minute user timer. No `git clone`, no hand-copied
+units.
+
+Tweak it from the CLI afterwards (comments in the file are preserved), or edit the file directly:
+
+```sh
+greyline city add "London" 51.51 -0.13 Europe/London --home
+greyline city list
+greyline config set theme blue
+greyline config set twilight.darkness dramatic
+greyline doctor          # detected backend, outputs, timer status
+```
+
+**No systemd?** Every init system / WM works — skip the timer and add greyline to your session
+autostart instead:
+
+```sh
+greyline watch           # renders + applies every minute in the foreground
 ```
 
 ### Desktop environments (GNOME / KDE / XFCE / other)
 
-greyline has native backends for wlroots compositors (sway/Hyprland/…) and X11 (feh). On
-desktops that manage their own wallpaper — **GNOME, KDE Plasma, XFCE** — use the generic
-`command` backend: greyline renders a PNG and runs *your* command to set it, with `{path}`
-(the PNG) and `{output}` (the output name) substituted.
+On desktops that manage their own wallpaper (GNOME, KDE Plasma, XFCE), `greyline init` sets up
+the generic `command` backend for you: greyline renders a PNG and runs a command to set it as
+your wallpaper.
 
-> **Note:** this **replaces** your desktop wallpaper — it is not an overlay on top of it.
-> greyline re-renders and re-sets it each minute; the last image stays after greyline stops.
+> **Note:** this **replaces** your desktop wallpaper — it is not an overlay. greyline re-renders
+> and re-sets it each minute; the last image stays after greyline stops.
 
-In `~/.config/greyline/config.toml`:
-
-```toml
-backend = "command"
-# resolution = "2560x1440"   # optional; else largest xrandr output, else 1920x1080
-
-# --- pick the line for your desktop ---
-# GNOME (the empty-then-set toggle defeats GNOME's same-URI cache; sets light + dark):
-command = 'gsettings set org.gnome.desktop.background picture-uri "" && gsettings set org.gnome.desktop.background picture-uri "file://{path}" && gsettings set org.gnome.desktop.background picture-uri-dark "file://{path}"'
-# KDE Plasma:
-command = 'plasma-apply-wallpaperimage {path}'
-# XFCE (the monitor segment varies — find yours with: xfconf-query -c xfce4-desktop -l | grep last-image):
-command = 'xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s {path}'
-```
-
-Then wire up the systemd timer as in the pipx section above (or `services.greyline.command`
-in the Nix module). Test once with `greyline --backend command --command '…'` before enabling
-the timer.
-
-> These recipes are **best-effort and community-verified** — the maintainers run sway and
-> can't test them directly. If one doesn't work (or needs a tweak) on your desktop, please
-> [open a desktop-compatibility report](https://github.com/cothinking-dev/greyline/issues/new?template=desktop-compat.yml)
-> — that's how they get fixed.
+The command recipes are **best-effort / community-verified** — the maintainers run sway and
+can't test them directly. If yours needs a different command, set it with
+`greyline config set command '…'`, and please
+[open a desktop-compatibility report](https://github.com/cothinking-dev/greyline/issues/new?template=desktop-compat.yml)
+— that's how they get fixed. Raw recipes and by-hand setup are in [Advanced](#advanced).
 
 ## Configuration
 
-Non-Nix users edit `~/.config/greyline/config.toml`; the shipped
-[`worldtime/default-config.toml`](worldtime/default-config.toml) is the documented
-template. Keys: `backend`, `map_style` (`vector`/`raster`), `theme` (`dark`/`blue`),
-`format` (`24h`/`12h`), `logo` / `logo_path` / `logo_invert`, `[twilight] bands/darkness`,
-`[home] tz/column_highlight/color`, and a `[[city]]` list (`name`, `lat`, `lon`, `tz`,
-optional `label_side`).
+`greyline config` and `greyline city` edit `~/.config/greyline/config.toml` for you (preserving
+comments); you can also edit the file directly — the shipped
+[`worldtime/default-config.toml`](worldtime/default-config.toml) is the documented template.
+Keys: `backend`, `command`, `resolution`, `map_style` (`vector`/`raster`), `theme`
+(`dark`/`blue`), `format` (`24h`/`12h`), `logo` / `logo_path` / `logo_invert`,
+`[twilight] bands/darkness`, `[home] tz/column_highlight/color`, and a `[[city]]` list
+(`name`, `lat`, `lon`, `tz`, optional `label_side`).
 
 ## CLI
 
 ```
-greyline                 # render all outputs and apply (what the timer runs)
-greyline --list-outputs  # show detected backend + outputs
+greyline                          # render all outputs and apply (what the timer runs)
+greyline init                     # first-time setup: config + backend + scheduling
+greyline watch [--interval SEC]   # render+apply on a loop (any init system / WM)
+greyline config set <key> <val>   # also: get [key] / unset <key>   (edits the config file)
+greyline city add "<name>" <lat> <lon> <tz> [--home]   # also: list / remove "<name>"
+greyline enable | disable | status   # manage the systemd user timer
+greyline doctor                   # detected backend, outputs, session, timer
+greyline --list-outputs           # show detected backend + outputs
 greyline --out wt.png --res 1920x1200   # render a PNG, no backend needed
-greyline --backend swww  # force a backend
+greyline --backend swww           # force a backend
+```
+
+## Advanced
+
+**Set the backend by hand.** `greyline init` auto-configures it, but you can too. For
+GNOME/KDE/XFCE the `command` backend runs a shell command with `{path}` (the PNG) and `{output}`
+substituted (`greyline config set backend command`, then `config set command '…'`):
+
+```toml
+backend = "command"
+# resolution = "2560x1440"   # optional; else largest xrandr output, else 1920x1080
+# GNOME (empty-then-set defeats GNOME's same-URI cache; sets light + dark):
+command = 'gsettings set org.gnome.desktop.background picture-uri "" && gsettings set org.gnome.desktop.background picture-uri "file://{path}" && gsettings set org.gnome.desktop.background picture-uri-dark "file://{path}"'
+# KDE Plasma:
+command = 'plasma-apply-wallpaperimage {path}'
+# XFCE (the monitor segment varies — see: xfconf-query -c xfce4-desktop -l | grep last-image):
+command = 'xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s {path}'
+```
+
+Test once with `greyline --backend command --command '…'` before scheduling.
+
+**Set up systemd by hand.** `greyline enable` writes and enables the user timer. To do it
+yourself, the units are in [`systemd/`](systemd/):
+
+```sh
+install -Dm644 systemd/greyline.{service,timer} -t ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now greyline.timer
 ```
 
 ## How it works
@@ -165,5 +196,9 @@ logo is **Tux** (Larry Ewing / GIMP) — both cleanly redistributable. The origi
 IBM/Lenovo ThinkPad raster art and wordmark are **not** bundled; `map_style = "raster"`
 and the ThinkPad logo require you to supply those files yourself (see
 [`NOTICE`](NOTICE) and [`docs/CREDITS.md`](docs/CREDITS.md)).
+
+greyline is a **personal passion project**, built and maintained in spare time and released as
+**free and open-source software** (GPL-2.0-or-later). It's a labour of love, not a product —
+issues, desktop-compatibility recipes, and pull requests are all welcome.
 
 > Built with the assistance of AI coding tools.
