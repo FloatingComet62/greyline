@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/cothinking-dev/greyline/actions/workflows/ci.yml/badge.svg)](https://github.com/cothinking-dev/greyline/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/greyline.svg)](https://pypi.org/project/greyline/)
+[![Live demo](https://img.shields.io/badge/live-demo-2ea44f)](https://cothinking-dev.github.io/greyline/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPLv2%2B-blue.svg)](LICENSE)
 
 > A live world-time desktop wallpaper for Wayland/X11 — a world map with clocks for your
@@ -12,6 +13,9 @@
 
 <sub>Shown with the optional ThinkPad wordmark (a user-supplied logo — see [Credits](#credits)).
 The bundled default logo is Tux.</sub>
+
+**▶ [Try the live demo](https://cothinking-dev.github.io/greyline/)** — greyline running in your
+browser (your timezone highlighted), no install needed.
 
 greyline doesn't run a browser or a background daemon. A small Python program renders a PNG once
 a minute and hands it to your existing wallpaper mechanism, then exits — so it's effectively free
