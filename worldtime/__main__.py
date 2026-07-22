@@ -192,7 +192,7 @@ def cmd_config(args):
                 return 1
             print(val)
         elif os.path.isfile(path):
-            with open(path) as f:
+            with open(path, encoding="utf-8") as f:
                 sys.stdout.write(f.read())
         else:
             print(f"no config at {path} (run `greyline init`)", file=sys.stderr)

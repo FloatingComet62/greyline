@@ -74,9 +74,9 @@ def install_and_enable(interval="*:*:00", dry_run=False):
     if dry_run:
         return actions
     os.makedirs(UNIT_DIR, exist_ok=True)
-    with open(svc, "w") as f:
+    with open(svc, "w", encoding="utf-8") as f:
         f.write(service_unit())
-    with open(tmr, "w") as f:
+    with open(tmr, "w", encoding="utf-8") as f:
         f.write(timer_unit(interval))
     _systemctl("daemon-reload")
     _systemctl("enable", "--now", "greyline.timer")

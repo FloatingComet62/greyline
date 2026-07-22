@@ -38,7 +38,7 @@ def _outer_rings(filename):
 
     Holes are ignored (negligible at 110m; e.g. the Caspian reads as land).
     """
-    with open(os.path.join(GEO_DIR, filename)) as f:
+    with open(os.path.join(GEO_DIR, filename), encoding="utf-8") as f:
         gj = json.load(f)
     rings = []
     for feat in gj["features"]:
@@ -58,7 +58,7 @@ def _zone_features(filename):
     Handles both Polygon and MultiPolygon. `zone` is a float (can be fractional, e.g.
     5.75) — the UTC offset of that band.
     """
-    with open(os.path.join(GEO_DIR, filename)) as f:
+    with open(os.path.join(GEO_DIR, filename), encoding="utf-8") as f:
         gj = json.load(f)
     out = []
     for feat in gj["features"]:
@@ -76,7 +76,7 @@ def _named_lines(filename, name_substr):
 
     Handles both LineString and MultiLineString.
     """
-    with open(os.path.join(GEO_DIR, filename)) as f:
+    with open(os.path.join(GEO_DIR, filename), encoding="utf-8") as f:
         gj = json.load(f)
     segs = []
     for feat in gj["features"]:

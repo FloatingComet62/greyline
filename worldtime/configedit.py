@@ -40,7 +40,7 @@ def ensure_config(path=None):
 
 
 def _load(path):
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         return tomlkit.parse(f.read())
 
 
@@ -49,7 +49,7 @@ def _save(path, doc):
     d = os.path.dirname(path) or "."
     fd, tmp = tempfile.mkstemp(dir=d, prefix=".greyline-", suffix=".toml")
     try:
-        with os.fdopen(fd, "w") as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(tomlkit.dumps(doc))
         os.replace(tmp, path)
     except BaseException:

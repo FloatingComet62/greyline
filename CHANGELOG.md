@@ -11,6 +11,10 @@ All notable changes to greyline are documented here. The format is based on
   system IANA tz database, so stdlib `zoneinfo` couldn't resolve any timezone; greyline now
   depends on the `tzdata` PyPI package on Windows (Unix is unaffected — it ships tzdata
   system-wide). Caught by the new `windows-latest` CI matrix.
+- **Windows: reading the GeoJSON map data and the config no longer crashes with
+  `UnicodeDecodeError`.** File reads/writes now specify `encoding="utf-8"` instead of
+  relying on the platform default (Windows defaults to cp1252, which choked on the UTF-8
+  map/config data). Also caught by the `windows-latest` CI matrix.
 
 ## [0.5.0] — 2026-07-22
 
